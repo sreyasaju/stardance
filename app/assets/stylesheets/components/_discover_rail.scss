@@ -2,9 +2,9 @@
 
 .discover-rail {
   position: fixed;
-  right: 48px;
+  right: 32px;
   top: var(--space-xxl);
-  width: 425px;
+  width: 340px;
   max-height: calc(100vh - var(--space-xxl) - 48px);
   overflow-y: auto;
   display: flex;

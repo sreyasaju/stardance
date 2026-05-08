@@ -63,7 +63,7 @@ body.app-layout-page.signed-in {
 .app-layout {
   --layout-gap: 48px;
   --nav-reserved: calc(var(--sidebar-reserved) + var(--layout-gap));
-  --aside-reserved: 473px; // .discover-rail width (425px) + 48px inset
+  --aside-reserved: 380px;
 
   margin-left: var(--nav-reserved);
   margin-right: calc(var(--aside-reserved) + var(--layout-gap));
