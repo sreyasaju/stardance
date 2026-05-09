@@ -47,10 +47,26 @@ class ShopController < ApplicationController
   end
 
   def order
-    @shop_item = ShopItem.enabled.find(params[:shop_item_id])
+    @shop_item = ShopItem.find(params[:shop_item_id])
+    @mission_submission = load_redeemable_submission(@shop_item)
+
+    if @mission_submission.nil? && @shop_item.mission_prize_only?
+      redirect_to shop_path, alert: "This item can only be claimed by redeeming a mission prize."
+      return
+    end
+
+    unless @shop_item.enabled? || @mission_submission.present?
+      redirect_to shop_path, alert: "This item cannot be ordered."
+      return
+    end
 
     unless @shop_item.buyable_by_self?
       redirect_to shop_path, alert: "This item cannot be ordered on its own."
+      return
+    end
+
+    if @mission_submission.nil? && @shop_item.mission_locked_for?(current_user)
+      redirect_to shop_path, alert: "This item is locked behind a mission you haven't completed yet."
       return
     end
 
@@ -93,11 +109,19 @@ class ShopController < ApplicationController
       return
     end
 
-    @shop_item = ShopItem.enabled.find(params[:shop_item_id])
-    unless @shop_item.present?
+    @shop_item = ShopItem.find(params[:shop_item_id])
+    @mission_submission = load_redeemable_submission(@shop_item)
+
+    unless @shop_item.enabled? || @mission_submission.present?
       redirect_to shop_path, alert: "This item cannot be ordered."
       return
     end
+
+    if @mission_submission.nil? && @shop_item.mission_prize_only?
+      redirect_to shop_path, alert: "This item can only be claimed by redeeming a mission prize."
+      return
+    end
+
     unless @shop_item.buyable_by_self?
       redirect_to shop_path, alert: "This item cannot be ordered on its own."
       return
@@ -153,32 +177,41 @@ class ShopController < ApplicationController
     begin
       ActiveRecord::Base.transaction do
         current_user.lock!
-        user_balance = current_user.balance
 
-        if total_cost > user_balance
-          redirect_to shop_order_path(shop_item_id: @shop_item.id), alert: "Insufficient balance. You need #{total_cost} Stardust but only have #{user_balance} Stardust."
-          return
+        if @mission_submission.nil?
+          user_balance = current_user.balance
+          if total_cost > user_balance
+            redirect_to shop_order_path(shop_item_id: @shop_item.id), alert: "Insufficient balance. You need #{total_cost} Stardust but only have #{user_balance} Stardust."
+            return
+          end
         end
 
         @order = current_user.shop_orders.new(
           shop_item: @shop_item,
-          quantity: quantity,
+          quantity: @mission_submission ? 1 : quantity,
           frozen_address: selected_address,
-          accessory_ids: @accessories.pluck(:id)
+          accessory_ids: @mission_submission ? [] : @accessories.pluck(:id)
         )
+        @order.redeeming_mission_submission = @mission_submission if @mission_submission
         @order.aasm_state = "pending" if @order.respond_to?(:aasm_state=)
         @order.save!
 
-        # Create orders for each accessory (matching main item quantity)
-        @accessories.each do |accessory|
-          accessory_order = current_user.shop_orders.new(
-            shop_item: accessory,
-            quantity: quantity,
-            frozen_address: selected_address,
-            parent_order_id: @order.id
-          )
-          accessory_order.aasm_state = "pending" if accessory_order.respond_to?(:aasm_state=)
-          accessory_order.save!
+        if @mission_submission
+          chosen_prize = @mission_submission.mission.prizes.find_by(shop_item_id: @shop_item.id)
+          @mission_submission.update!(shop_order_id: @order.id, chosen_prize_id: chosen_prize&.id)
+        end
+
+        unless @mission_submission
+          @accessories.each do |accessory|
+            accessory_order = current_user.shop_orders.new(
+              shop_item: accessory,
+              quantity: quantity,
+              frozen_address: selected_address,
+              parent_order_id: @order.id
+            )
+            accessory_order.aasm_state = "pending" if accessory_order.respond_to?(:aasm_state=)
+            accessory_order.save!
+          end
         end
       end
 
@@ -282,5 +315,25 @@ class ShopController < ApplicationController
 
   def require_login
     redirect_to root_path, alert: "Please log in first" and return unless current_user
+  end
+
+  # Returns the user's redeemable Mission::Submission if `mission_submission_id`
+  # was passed and the submission is approved, owned by the current user,
+  # un-redeemed, and offering the given shop_item as a prize. Otherwise nil.
+  def load_redeemable_submission(shop_item)
+    return nil unless current_user
+    submission_id = params[:mission_submission_id]
+    return nil if submission_id.blank?
+
+    submission = Mission::Submission
+      .includes(mission: :prizes, ship_event: { post: :user })
+      .find_by(id: submission_id)
+    return nil unless submission
+    return nil unless submission.approved?
+    return nil unless submission.shop_order_id.nil?
+    return nil unless submission.ship_event&.post&.user_id == current_user.id
+    return nil unless submission.mission.prizes.exists?(shop_item_id: shop_item.id)
+
+    submission
   end
 end

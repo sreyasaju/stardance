@@ -5,13 +5,13 @@ class UsersController < ApplicationController
     @user = User.find(params[:id])
     authorize @user
 
-    @body_class = "user-profile-page"
+    @body_class = "app-layout-page"
     @active_tab = TAB_KEYS.include?(params[:tab]) ? params[:tab] : "feed"
 
     @projects = @user.projects
                      .select(:id, :title, :description, :created_at, :updated_at, :ship_status, :shipped_at, :devlogs_count, :duration_seconds)
                      .order(created_at: :desc)
-                     .includes(:users, banner_attachment: :blob)
+                     .includes(:users, :mission_attachments, banner_attachment: :blob)
 
     @activity = Post.joins(:project)
                     .merge(Project.not_deleted)
@@ -38,7 +38,7 @@ class UsersController < ApplicationController
       devlogs_count: devlogs_count,
       ships_count: ships_count,
       votes_count: votes_count,
-      projects_count: @user.projects_count || @user.projects.size,
+      projects_count: @projects.size,
       hours_all_time: (@user.devlog_seconds_total / 3600.0).round
     }
 

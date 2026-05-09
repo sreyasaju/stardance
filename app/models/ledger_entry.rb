@@ -70,7 +70,7 @@ class LedgerEntry < ApplicationRecord
   end
 
   def notify_balance_change
-    return unless user.slack_balance_notifications?
+    return unless user.preference.stardust_balance_notifications?
 
     source = case ledgerable_type
     when "ShopOrder" then "shop purchase"

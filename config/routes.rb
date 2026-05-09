@@ -21,9 +21,6 @@
 #                                              votes GET    /votes(.:format)                                                                                  votes#index
 #                                                    POST   /votes(.:format)                                                                                  votes#create
 #                                           new_vote GET    /votes/new(.:format)                                                                              votes#new
-#                                      explore_index GET    /explore(.:format)                                                                                explore#index
-#                                    explore_gallery GET    /explore/gallery(.:format)                                                                        explore#gallery
-#                                  explore_following GET    /explore/following(.:format)                                                                      explore#following
 #                                 rails_health_check GET    /up(.:format)                                                                                     rails/health#show
 #                                         test_error GET    /test_error(.:format)                                                                             debug#error
 #                                  letter_opener_web        /letter_opener                                                                                    LetterOpenerWeb::Engine
@@ -38,10 +35,10 @@
 #                                     dev_login_auto GET    /dev_login(.:format)                                                                              sessions#dev_login
 #                                          dev_login GET    /dev_login/:id(.:format)                                                                          sessions#dev_login
 #                                               home GET    /home(.:format)                                                                                   home#index
+#                                           commands GET    /commands(.:format)                                                                               commands#index
 #                                        leaderboard GET    /leaderboard(.:format)                                                                            leaderboard#index
 #                                         my_balance GET    /my/balance(.:format)                                                                             my#balance
 #                                        my_settings PATCH  /my/settings(.:format)                                                                            my#update_settings
-#                                    my_cookie_click POST   /my/cookie_click(.:format)                                                                        my#cookie_click
 #                                      dismiss_thing POST   /my/dismiss_thing(.:format)                                                                       my#dismiss_thing
 #                                            my_club DELETE /my/club(.:format)                                                                                my#unlink_club
 #                                    my_achievements GET    /my/achievements(.:format)                                                                        achievements#index
@@ -183,8 +180,7 @@
 #                                unmark_fire_project POST   /projects/:id/unmark_fire(.:format)                                                               projects#unmark_fire
 #                                     follow_project POST   /projects/:id/follow(.:format)                                                                    projects#follow
 #                                   unfollow_project DELETE /projects/:id/unfollow(.:format)                                                                  projects#unfollow
-#                                           projects GET    /projects(.:format)                                                                               projects#index
-#                                                    POST   /projects(.:format)                                                                               projects#create
+#                                           projects POST   /projects(.:format)                                                                               projects#create
 #                                        new_project GET    /projects/new(.:format)                                                                           projects#new
 #                                       edit_project GET    /projects/:id/edit(.:format)                                                                      projects#edit
 #                                            project GET    /projects/:id(.:format)                                                                           projects#show
@@ -196,8 +192,18 @@
 #                                    devlog_comments POST   /devlogs/:devlog_id/comments(.:format)                                                            comments#create
 #                                     devlog_comment DELETE /devlogs/:devlog_id/comments/:id(.:format)                                                        comments#destroy
 #                                      user_og_image GET    /users/:user_id/og_image(.:format)                                                                users/og_images#show {format: :png}
+#                                        user_follow DELETE /users/:user_id/follow(.:format)                                                                  follows#destroy
+#                                                    POST   /users/:user_id/follow(.:format)                                                                  follows#create
+#                                     followers_user GET    /users/:id/followers(.:format)                                                                    users#followers
+#                                     following_user GET    /users/:id/following(.:format)                                                                    users#following
 #                                               user GET    /users/:id(.:format)                                                                              users#show
+#                                                    PATCH  /users/:id(.:format)                                                                              users#update
+#                                                    PUT    /users/:id(.:format)                                                                              users#update
+#                                       search_users GET    /search/users(.:format)                                                                           search#users
+#                                    search_projects GET    /search/projects(.:format)                                                                        search#projects
 #                                                edu GET    /edu(.:format)                                                                                    landing#edu
+#                                             guides GET    /guides(.:format)                                                                                 guides#index
+#                                              guide GET    /guides/:id(.:format)                                                                             guides#show
 #                                                    GET    /:ref(.:format)                                                                                   landing#index {ref: /[a-z0-9][a-z0-9_-]{0,63}/}
 #                                  rails_performance        /rails/performance                                                                                RailsPerformance::Engine
 #                   turbo_recede_historical_location GET    /recede_historical_location(.:format)                                                             turbo/native/navigation#recede
@@ -412,10 +418,6 @@ Rails.application.routes.draw do
     end
   end
 
-  # Explore
-  get "explore", to: "explore#index", as: :explore_index
-  get "explore/gallery", to: "explore#gallery", as: :explore_gallery
-  get "explore/following", to: "explore#following", as: :explore_following
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
@@ -447,7 +449,7 @@ Rails.application.routes.draw do
   get "dev_login/:id", to: "sessions#dev_login", as: :dev_login if Rails.env.development? || Rails.env.test?
 
   # OAuth callback for HCA
-  # get "/oauth/callback", to: "sessions#create"
+  get "/oauth/callback", to: "sessions#create"
 
   # Home
   get "home", to: "home#index"
@@ -461,9 +463,7 @@ Rails.application.routes.draw do
   # My
   get "my/balance", to: "my#balance", as: :my_balance
   patch "my/settings", to: "my#update_settings", as: :my_settings
-  post "my/stardust_click", to: "my#stardust_click", as: :my_stardust_click
   post "my/dismiss_thing", to: "my#dismiss_thing", as: :dismiss_thing
-  delete "my/club", to: "my#unlink_club", as: :my_club
   get "my/achievements", to: "achievements#index", as: :my_achievements
 
   namespace :seller do
@@ -634,6 +634,16 @@ Rails.application.routes.draw do
         post :trigger
       end
     end
+
+    resources :missions, param: :slug do
+      resources :steps,        only: [ :create, :update, :destroy ], controller: "mission_steps"
+      resources :prizes,       only: [ :create, :update, :destroy ], controller: "mission_prizes"
+      resources :memberships,  only: [ :create, :update, :destroy ], controller: "mission_memberships"
+      resources :shop_unlocks, only: [ :create, :destroy ],          controller: "mission_shop_unlocks"
+      member do
+        post :restore
+      end
+    end
   end
 
   get "queue", to: "queue#index"
@@ -650,6 +660,11 @@ Rails.application.routes.draw do
     resources :reports, only: [ :create ], module: :projects
     resource :og_image, only: [ :show ], module: :projects, defaults: { format: :png }
     resource :ships, only: [ :new, :create ], module: :projects
+    resource :mission, only: [ :create, :destroy ], module: :projects, controller: "missions"
+    resources :mission_step_completions,
+              only: [ :create, :destroy ],
+              module: :projects,
+              param: :mission_step_id
     member do
       get :readme
       post :mark_fire
@@ -683,6 +698,32 @@ Rails.application.routes.draw do
 
   # Guides
   resources :guides, only: [ :index, :show ]
+
+  # Missions (public listing + show page).
+  # Project-side / reviewer-queue / admin-managed missions surfaces ship in later PRs.
+  resources :missions, only: [ :index, :show ], param: :slug do
+    resource :og_image, only: [ :show ], module: :missions, defaults: { format: :png }
+  end
+
+  # Reviewer queue.
+  resources :mission_submissions, only: [ :index, :show ] do
+    member do
+      post :approve
+      post :reject
+      post :undo
+      get  :redeem
+    end
+  end
+
+  # Owner-managed mission CRUD.
+  namespace :manage do
+    resources :missions, param: :slug, only: [ :show, :edit, :update ] do
+      resources :steps,        only: [ :create, :update, :destroy ], controller: "mission_steps"
+      resources :prizes,       only: [ :create, :update, :destroy ], controller: "mission_prizes"
+      resources :memberships,  only: [ :create, :update, :destroy ], controller: "mission_memberships"
+      resources :shop_unlocks, only: [ :create, :destroy ],          controller: "mission_shop_unlocks"
+    end
+  end
 
   get "/:ref", to: "landing#index", constraints: { ref: /[a-z0-9][a-z0-9_-]{0,63}/ }
 end

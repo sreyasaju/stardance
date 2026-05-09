@@ -31,6 +31,7 @@ Rails.application.config.after_initialize do
     Flipper.add(:shop_order_daily_summary) unless Flipper.exist?(:shop_order_daily_summary)
     Flipper.add(:shipping) unless Flipper.exist?(:shipping)
     Flipper.add(:show_and_tell_live) unless Flipper.exist?(:show_and_tell_live)
+    Flipper.add(:missions) unless Flipper.exist?(:missions)
   rescue StandardError => e
     Rails.logger.warn "Could not initialize flipper: #{e.message}"
   end

@@ -48,14 +48,14 @@ class FollowTest < ActiveSupport::TestCase
   end
 
   test "fires Slack DM to followed user when notifications enabled" do
-    @bob.update!(send_notifications_for_new_followers: true)
+    @bob.preference.update!(send_notifications_for_new_followers: true)
     assert_enqueued_with(job: SendSlackDmJob) do
       Follow.create!(follower: @alice, followed: @bob)
     end
   end
 
   test "does not fire Slack DM if followed user opted out" do
-    @bob.update!(send_notifications_for_new_followers: false)
+    @bob.preference.update!(send_notifications_for_new_followers: false)
     assert_no_enqueued_jobs(only: SendSlackDmJob) do
       Follow.create!(follower: @alice, followed: @bob)
     end

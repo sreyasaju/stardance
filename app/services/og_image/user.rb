@@ -148,7 +148,10 @@ module OgImage
     end
 
     def projects_count
-      @user.respond_to?(:projects_count) ? (@user.projects_count || 0) : 0
+      return @user.projects.count if @user.respond_to?(:projects)
+      return @user.projects_count.to_i if @user.respond_to?(:projects_count)
+
+      0
     end
 
     def stardust_earned

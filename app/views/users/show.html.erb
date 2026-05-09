@@ -3,7 +3,7 @@
 <% content_for :og_description, "#{@stats[:projects_count]} projects · #{@stats[:ships_count]} ships · #{@stats[:devlogs_count]} devlogs" %>
 <% content_for :og_image, user_og_image_url(@user, format: :png) %>
 
-<% if @user.search_engine_indexing_off? %>
+<% if @user.preference.search_engine_indexing_off? %>
   <% content_for :head do %>
     <meta name="robots" content="noindex, nofollow">
   <% end %>
@@ -12,8 +12,8 @@
 <% own_profile = current_user&.id == @user.id %>
 <% banner_url = @user.banner.attached? ? url_for(@user.banner) : image_path("profile/default-banner.png") %>
 
-<div class="profile-layout">
-  <div class="profile-layout__main">
+<div class="app-layout">
+  <div class="app-layout__main">
     <%= turbo_frame_tag "profile_card" do %>
     <%= form_with model: @user, url: user_path(@user), method: :patch, multipart: true,
                   class: "profile",
@@ -25,7 +25,15 @@
 
   <header class="profile__header">
     <div class="profile__banner" data-profile-edit-target="banner" style="--banner-image: url('<%= banner_url %>');">
-      <%= link_to home_path, class: "profile__back", "aria-label": "Back to home", data: { turbo_frame: "_top" } do %>
+      <%= link_to home_path,
+                  class: "profile__back",
+                  "aria-label": "Back",
+                  data: {
+                    controller: "back-button",
+                    "back-button-fallback-value": home_path,
+                    action: "click->back-button#go",
+                    turbo_frame: "_top"
+                  } do %>
         <svg class="profile__back-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14 6l-6 6 6 6" />
         </svg>
@@ -133,7 +141,7 @@
               <%# profile-edit form_with — clicking it would otherwise submit the %>
               <%# wrong form. %>
               <%= link_to user_follow_path(@user),
-                          class: [ "profile__action-btn", "profile__action-btn--primary", "profile__action-btn--follow", ("profile__action-btn--following" if @viewer_follows) ].compact.join(" "),
+                          class: [ "profile__action-btn", "profile__action-btn--primary", ("profile__action-btn--following" if @viewer_follows) ].compact.join(" "),
                           data: { turbo_method: (@viewer_follows ? :delete : :post), turbo_frame: "_top" } do %>
                 <span class="profile__follow-label-default"><%= @viewer_follows ? "Following" : "Follow" %></span>
                 <% if @viewer_follows %>
@@ -220,7 +228,18 @@
                   <p class="profile-project-card__description"><%= project.description %></p>
                 <% end %>
 
-                <p class="profile-project-card__updated">Last updated <%= time_ago_in_words(project.updated_at) %> ago</p>
+                <% mission = project.current_mission %>
+                <div class="profile-project-card__footer">
+                  <p class="profile-project-card__updated">Last updated <%= time_ago_in_words(project.updated_at) %> ago</p>
+                  <% if mission %>
+                    <span class="profile-project-card__mission-badge" title="Active mission: <%= mission.name %>">
+                      <% if mission.icon.attached? %>
+                        <%= image_tag mission.icon, class: "profile-project-card__mission-badge-icon", alt: "" %>
+                      <% end %>
+                      <span class="profile-project-card__mission-badge-name"><%= mission.name %></span>
+                    </span>
+                  <% end %>
+                </div>
               </div>
             <% end %>
           </li>
@@ -242,29 +261,7 @@
 <% end %>
   </div>
 
-  <aside class="profile-layout__aside" aria-label="Discover">
-    <div class="right-rail__search">
-      <input type="text" class="right-rail__search-input" placeholder="Search…" aria-label="Search" autocomplete="off" disabled>
-      <%= inline_svg_tag "icons/search.svg", class: "right-rail__search-icon" %>
-    </div>
-
-    <section class="right-rail__section" aria-label="Popular projects this week">
-      <h2 class="right-rail__heading">Popular projects this week</h2>
-      <div class="right-rail__placeholder right-rail__placeholder--tall"></div>
-    </section>
-
-    <section class="right-rail__section" aria-label="Sidequests for you">
-      <h2 class="right-rail__heading">Sidequests for you</h2>
-      <div class="right-rail__placeholder"></div>
-      <div class="right-rail__placeholder"></div>
-    </section>
-
-    <section class="right-rail__section" aria-label="Stardance updates">
-      <h2 class="right-rail__heading">Stardance updates</h2>
-      <div class="right-rail__placeholder"></div>
-      <div class="right-rail__placeholder"></div>
-    </section>
-  </aside>
+  <%= render DiscoverRailComponent.new %>
 </div>
 
 <dialog id="followers-modal"
