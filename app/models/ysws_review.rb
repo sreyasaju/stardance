@@ -15,7 +15,7 @@
 #  updated_at            :datetime         not null
 #  post_ship_event_id    :bigint           not null
 #  project_id            :bigint           not null
-#  reviewer_id           :bigint           not null
+#  reviewer_id           :bigint
 #  ship_cert_id          :bigint
 #  spotchecked_by_id     :bigint
 #  user_id               :bigint           not null
