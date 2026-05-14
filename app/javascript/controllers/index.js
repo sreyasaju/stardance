@@ -133,6 +133,9 @@ application.register("readme-image", ReadmeImageController);
 import RevealOnScrollController from "./reveal_on_scroll_controller";
 application.register("reveal-on-scroll", RevealOnScrollController);
 
+import ReviewSidebarController from "./review_sidebar_controller";
+application.register("review-sidebar", ReviewSidebarController);
+
 import RocketArcController from "./rocket_arc_controller";
 application.register("rocket-arc", RocketArcController);
 

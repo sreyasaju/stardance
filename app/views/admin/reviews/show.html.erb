@@ -1,6 +1,6 @@
 <% content_for :title, "YSWS Review ##{@review.id}" %>
 
-<main class="admin-ysws-reviews" role="main">
+<main class="admin-ysws-reviews" role="main" data-controller="review-sidebar">
   <!-- Header Section -->
   <div class="review-detail-header">
     <%= link_to "← back", "/admin/review", class: "btn-back", "aria-label": "Back to review queue" %>
@@ -8,7 +8,14 @@
     <div class="header-content">
       <div class="header-left">
         <h1>YSWS Review</h1>
-        <h2 class="project-name"><%= @review.project.title %></h2>
+        <div style="display: flex; align-items: center; gap: var(--space-m);">
+          <h2 class="project-name"><%= @review.project.title %></h2>
+          <% if @review.reviewed_at %>
+            <span class="status-done">done</span>
+          <% else %>
+            <span class="status-pending">pending</span>
+          <% end %>
+        </div>
         <% unless @review.ship_cert_id %>
           <p class="ship-event-note">This is a standalone ship event (reship)</p>
         <% end %>
@@ -108,7 +115,7 @@
       </section>
 
       <!-- Boss Note Section -->
-      <section class="review-card boss-note-card">
+      <section class="review-card boss-note-card" data-review-sidebar-target="trigger">
         <h3>Note from da boss of YSWS - Alex (aka AVD)</h3>
         <div class="boss-note-content">
           <div class="note-title">Reject if:</div>
@@ -136,9 +143,9 @@
                 <div class="devlog-main">
                   <div class="devlog-header-row">
                     <span class="devlog-id">Devlog #<%= devlog_review.post_devlog.id %></span>
-                    <% if devlog_review.approved_minutes && devlog_review.approved_minutes > 0 %>
+                    <% if devlog_review.approved? %>
                       <span class="devlog-status status-approved">Approved</span>
-                    <% elsif devlog_review.approved_minutes == 0 %>
+                    <% elsif devlog_review.rejected? %>
                       <span class="devlog-status status-rejected">Rejected</span>
                     <% end %>
                   </div>
@@ -271,10 +278,18 @@
     </div>
 
     <!-- Right Column -->
-    <div class="review-detail-right">
+    <div class="review-detail-right" data-review-sidebar-target="sidebar">
+      <!-- Popup Toggle Button (only visible in popup mode) -->
+      <button type="button"
+              class="review-sidebar-toggle"
+              data-review-sidebar-target="toggle"
+              data-action="click->review-sidebar#togglePopup"
+              aria-label="Toggle project details">
+        Details
+      </button>
+
       <!-- Details Card -->
       <section class="review-card details-card">
-        <h3>Details</h3>
         <div class="details-list">
           <div class="detail-item">
             <span class="detail-key">Project:</span>
@@ -285,12 +300,12 @@
 
           <div class="detail-item">
             <span class="detail-key">Submitter:</span>
-            <span class="detail-value">
-              <%= @review.user.display_name || @review.user.email || "Unknown User" %>
-              <div class="fraud-links">
+            <span class="detail-value" style="display: flex; align-items: center; gap: var(--space-xs); flex-wrap: wrap;">
+              <span><%= @review.user.display_name || @review.user.email || "Unknown User" %></span>
+              <span class="fraud-links" style="display: inline-flex; gap: var(--space-xxs);">
                 <a href="#" class="fraud-link" target="_blank">Billy</a>
                 <a href="#" class="fraud-link" target="_blank">Joe</a>
-              </div>
+              </span>
             </span>
           </div>
 
@@ -316,31 +331,17 @@
             </span>
           </div>
 
-          <div class="detail-item">
+          <div class="detail-item" style="display: grid; grid-template-columns: auto 1fr; column-gap: var(--space-m);">
             <span class="detail-key">Ship Certified:</span>
             <span class="detail-value">
               <%= @review.ship_cert_id ? "Yes" : "N/A (Reship)" %>
             </span>
-          </div>
-
-          <div class="detail-item">
             <span class="detail-key">Ship Cert:</span>
             <span class="detail-value">
               <% if @review.ship_cert_id %>
                 #<%= @review.ship_cert_id %>
               <% else %>
                 N/A
-              <% end %>
-            </span>
-          </div>
-
-          <div class="detail-item">
-            <span class="detail-key">YSWS Status:</span>
-            <span class="detail-value">
-              <% if @review.reviewed_at %>
-                <span class="status-done">done</span>
-              <% else %>
-                <span class="status-pending">pending</span>
               <% end %>
             </span>
           </div>
