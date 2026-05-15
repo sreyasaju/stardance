@@ -1078,9 +1078,18 @@
         scrollbar-color: var(--color-space-border) transparent;
       }
 
-      // Open state - slide into view
+      // Open state - slide into view and expand to full height
       &.is-open {
         transform: translateX(0);
+        top: 2rem;
+        max-height: calc(100vh - 4rem);
+        width: 500px;
+
+        @media (max-width: 600px) {
+          top: 1rem;
+          max-height: calc(100vh - 2rem);
+          width: 95vw;
+        }
       }
     }
   }
@@ -1114,7 +1123,7 @@
     writing-mode: vertical-lr;
     text-orientation: mixed;
     cursor: pointer;
-    z-index: 999;
+    z-index: 1001;
     transition: all 0.2s ease;
 
     @media (prefers-reduced-motion: reduce) {
@@ -1132,8 +1141,8 @@
       }
     }
 
-    // Only show in popup mode
-    .review-detail-right.is-popup-mode & {
+    // Only show in popup mode (button is sibling of grid, not child of sidebar)
+    &.is-visible {
       display: block;
     }
 

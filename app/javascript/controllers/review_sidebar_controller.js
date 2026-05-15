@@ -21,36 +21,52 @@ export default class extends Controller {
 
     // Track popup open state
     this.isOpen = false;
+    this.popupModeActivated = false;
 
     // Observe the trigger element (boss note card)
     this.observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
+          if (entry.isIntersecting && !this.popupModeActivated) {
             // Boss note is visible - transform to popup mode
             console.log("Boss note visible - activating popup mode");
+            this.popupModeActivated = true;
             this.sidebarTarget.classList.add("is-popup-mode");
-          } else {
-            // Scrolled back up - return to normal mode
-            console.log("Boss note hidden - returning to normal mode");
-            this.sidebarTarget.classList.remove("is-popup-mode");
-            this.sidebarTarget.classList.remove("is-open");
-            this.isOpen = false;
+            this.toggleTarget.classList.add("is-visible");
           }
         });
       },
       {
-        // Trigger when any part of the element enters the viewport
-        threshold: 0,
-        rootMargin: "0px",
+        // Only trigger when boss note is well into the viewport
+        // Negative top margin means element must scroll this far up before triggering
+        threshold: 0.1,
+        rootMargin: "-300px 0px 0px 0px",
       }
     );
 
     this.observer.observe(this.triggerTarget);
+
+    // Listen for scroll to detect when user scrolls back to top
+    this.scrollHandler = () => {
+      // If scrolled near the top (within 200px), exit popup mode
+      if (window.scrollY < 200 && this.popupModeActivated) {
+        console.log("Scrolled to top - returning to normal mode");
+        this.popupModeActivated = false;
+        this.sidebarTarget.classList.remove("is-popup-mode");
+        this.sidebarTarget.classList.remove("is-open");
+        this.toggleTarget.classList.remove("is-visible");
+        this.isOpen = false;
+      }
+    };
+
+    window.addEventListener("scroll", this.scrollHandler, { passive: true });
   }
 
   disconnect() {
     this.observer?.disconnect();
+    if (this.scrollHandler) {
+      window.removeEventListener("scroll", this.scrollHandler);
+    }
   }
 
   // Toggle the popup open/closed

@@ -52,6 +52,15 @@
     </div>
   </div>
 
+  <!-- Popup Toggle Button (only visible in popup mode) -->
+  <button type="button"
+          class="review-sidebar-toggle"
+          data-review-sidebar-target="toggle"
+          data-action="click->review-sidebar#togglePopup"
+          aria-label="Toggle project details">
+    Details
+  </button>
+
   <!-- Main Content Grid -->
   <div class="review-detail-grid">
     <!-- Left Column -->
@@ -279,15 +288,6 @@
 
     <!-- Right Column -->
     <div class="review-detail-right" data-review-sidebar-target="sidebar">
-      <!-- Popup Toggle Button (only visible in popup mode) -->
-      <button type="button"
-              class="review-sidebar-toggle"
-              data-review-sidebar-target="toggle"
-              data-action="click->review-sidebar#togglePopup"
-              aria-label="Toggle project details">
-        Details
-      </button>
-
       <!-- Details Card -->
       <section class="review-card details-card">
         <div class="details-list">
