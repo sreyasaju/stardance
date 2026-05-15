@@ -15,10 +15,15 @@
   <% if enabled? %>
     <%= form_with model: [selected_project, post],
           url: project_devlogs_path(selected_project),
-          html: { multipart: true, data: { controller: "" } },
+          html: { multipart: true,
+                  data: { controller: "composer",
+                          composer_max_files_value: Post::Devlog::MAX_ATTACHMENTS,
+                          action: "paste->composer#paste" } },
           class: "feed-composer__form",
           local: true do |f| %>
-      <div class="feed-composer__main">
+      <div class="feed-composer__main"
+           data-composer-target="dropZone"
+           data-action="drop->composer#drop dragover->composer#dragover dragleave->composer#dragleave">
         <%= image_tag current_user.avatar, alt: "", class: "feed-composer__avatar" %>
 
         <div class="feed-composer__field">
@@ -32,6 +37,8 @@
         </div>
       </div>
 
+      <div class="feed-composer__grid" data-composer-target="grid" data-count="0" hidden></div>
+
       <div class="feed-composer__footer">
         <div class="feed-composer__tools">
           <label class="feed-composer__tool" aria-label="Attach media">
@@ -39,7 +46,9 @@
             <%= f.file_field :attachments,
                   multiple: true,
                   accept: Post::Devlog::ACCEPTED_CONTENT_TYPES.join(","),
-                  class: "feed-composer__file-input" %>
+                  class: "feed-composer__file-input",
+                  data: { composer_target: "fileInput",
+                          action: "change->composer#selectFiles" } %>
           </label>
 
           <button type="button" class="feed-composer__tool" aria-label="Emoji picker">
