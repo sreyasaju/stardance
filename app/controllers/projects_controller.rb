@@ -39,11 +39,13 @@ class ProjectsController < ApplicationController
 
       if @hackatime_linked
         @linked_hackatime_projects = @project.hackatime_projects
-        @all_hackatime_projects = current_user.hackatime_projects.includes(:project)
+        @all_hackatime_projects = current_user.hackatime_projects
         result = current_user.try_sync_hackatime_data!
         @hackatime_times = result&.dig(:projects) || {}
 
         linked_ids = @linked_hackatime_projects.map(&:id).to_set
+        taken_project_ids = @all_hackatime_projects.map(&:project_id).compact.uniq - [ @project.id ]
+        taken_titles = Project.where(id: taken_project_ids).pluck(:id, :title).to_h
         @hackatime_dropdown_items = @all_hackatime_projects.map do |hp|
           seconds = @hackatime_times[hp.name] || 0
           taken = hp.project_id.present? && hp.project_id != @project.id
@@ -53,7 +55,7 @@ class ProjectsController < ApplicationController
             seconds: seconds,
             hours: (seconds / 3600.0).round(1),
             taken: taken,
-            taken_by: taken ? hp.project&.title : nil,
+            taken_by: taken ? taken_titles[hp.project_id] : nil,
             linked: linked_ids.include?(hp.id)
           }
         end

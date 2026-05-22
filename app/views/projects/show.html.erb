@@ -344,21 +344,68 @@
 
     <% if is_member %>
       <% if @hackatime_linked %>
+        <%
+          no_hackatime_project = @project.hackatime_keys.blank?
+          live_seconds = @project.hackatime_keys.sum { |k| @hackatime_times[k].to_i }
+          unposted_seconds = [ live_seconds - @project.duration_seconds, 0 ].max
+          enough_time = !no_hackatime_project && unposted_seconds >= 15 * 60
+          devlog_disabled_message = "Edit this project to add a Hackatime project" if no_hackatime_project
+          # Only call it the primary action when devlogging is actually
+          # actionable right now — i.e. you have a Hackatime project AND at
+          # least 15m of unposted time. Otherwise it stays secondary.
+          devlog_primary = @project.next_step_is_devlog? && enough_time
+          devlog_modifier_class = devlog_primary ? "project-show__action--primary" : "project-show__action--secondary"
+        %>
         <nav class="project-show__actions" aria-label="Project actions">
-          <button type="button"
-                  class="project-show__action project-show__action--secondary"
-                  onclick="document.getElementById('composer-modal-' + <%= @project.id.to_json %>).showModal()">
-            Post a devlog<span class="project-show__action-icon" aria-hidden="true">+</span>
-          </button>
-          <%= link_to new_project_ships_path(@project),
-                      class: "project-show__action project-show__action--primary",
-                      data: { turbo_frame: "_top" } do %>
-            Create new ship<%= image_tag "icons/rocket.png", alt: "", class: "project-show__action-icon project-show__action-icon--img" %>
+          <% if devlog_disabled_message %>
+            <button type="button"
+                    class="project-show__action <%= devlog_modifier_class %>"
+                    disabled
+                    aria-disabled="true"
+                    data-controller="disabled-tooltip"
+                    data-disabled-tooltip-message-value="<%= devlog_disabled_message %>"
+                    data-disabled-tooltip-position-value="top">
+              Post a devlog<span class="project-show__action-icon" aria-hidden="true">+</span>
+            </button>
+          <% else %>
+            <button type="button"
+                    class="project-show__action <%= devlog_modifier_class %>"
+                    onclick="document.getElementById('composer-modal-' + <%= @project.id.to_json %>).showModal()">
+              Post a devlog<span class="project-show__action-icon" aria-hidden="true">+</span>
+            </button>
+          <% end %>
+          <% if @project.has_devlog_since_last_ship? %>
+            <% if unposted_seconds >= 15 * 60 %>
+              <button type="button"
+                      class="project-show__action project-show__action--primary"
+                      onclick="document.getElementById('ship-warning-modal-<%= @project.id %>').showModal()">
+                Create new ship<%= image_tag "icons/rocket.png", alt: "", class: "project-show__action-icon project-show__action-icon--img" %>
+              </button>
+            <% else %>
+              <%= link_to new_project_ships_path(@project),
+                          class: "project-show__action project-show__action--primary",
+                          data: { turbo_frame: "_top" } do %>
+                Create new ship<%= image_tag "icons/rocket.png", alt: "", class: "project-show__action-icon project-show__action-icon--img" %>
+              <% end %>
+            <% end %>
+          <% else %>
+            <button type="button"
+                    class="project-show__action project-show__action--secondary"
+                    disabled
+                    aria-disabled="true"
+                    data-controller="disabled-tooltip"
+                    data-disabled-tooltip-message-value="Post at least one devlog before shipping!"
+                    data-disabled-tooltip-position-value="top">
+              Create new ship<%= image_tag "icons/rocket.png", alt: "", class: "project-show__action-icon project-show__action-icon--img" %>
+            </button>
           <% end %>
           <button type="button"
                   class="project-show__action project-show__action--secondary"
                   disabled
-                  title="Manage teammates — coming soon">Manage teammates</button>
+                  aria-disabled="true"
+                  data-controller="disabled-tooltip"
+                  data-disabled-tooltip-message-value="This feature is WIP!"
+                  data-disabled-tooltip-position-value="top">Manage teammates</button>
         </nav>
       <% else %>
         <nav class="project-show__actions project-show__actions--single" aria-label="Project actions">
@@ -384,14 +431,16 @@
         </header>
 
         <div class="project-show__onboarding-list">
-          <%= link_to guide_path(:github_repository),
-                      class: "project-show__onboarding-card",
-                      data: { turbo_frame: "_top" } do %>
-            <span class="project-show__onboarding-card-body">
-              <strong class="project-show__onboarding-card-body-title">Create your GitHub repository</strong>
-              <span class="project-show__onboarding-card-body-text">Learn to use a GitHub repository to store your project's code, and link it to your Stardance project.</span>
-            </span>
-            <span class="project-show__onboarding-card-action">See tutorial →</span>
+          <% if @project.repo_url.blank? %>
+            <%= link_to guide_path(:github_repository),
+                        class: "project-show__onboarding-card",
+                        data: { turbo_frame: "_top" } do %>
+              <span class="project-show__onboarding-card-body">
+                <strong class="project-show__onboarding-card-body-title">Create your GitHub repository</strong>
+                <span class="project-show__onboarding-card-body-text">Learn to use a GitHub repository to store your project's code, and link it to your Stardance project.</span>
+              </span>
+              <span class="project-show__onboarding-card-action">See tutorial →</span>
+            <% end %>
           <% end %>
 
           <% if @project_onboarding_mission.present? %>
@@ -505,6 +554,37 @@
             projects: @composer_projects,
             selected_project: @project
           ) %>
+    </dialog>
+  <% end %>
+
+  <% if is_member && @hackatime_linked && @project.has_devlog_since_last_ship? %>
+    <%
+      ship_warn_seconds = [ @project.hackatime_keys.sum { |k| @hackatime_times[k].to_i } - @project.duration_seconds, 0 ].max
+      ship_warn_hours = ship_warn_seconds / 3600
+      ship_warn_minutes = (ship_warn_seconds % 3600) / 60
+      ship_warn_time = ship_warn_hours > 0 ? "#{ship_warn_hours}h #{ship_warn_minutes}m" : "#{ship_warn_minutes}m"
+    %>
+    <dialog id="ship-warning-modal-<%= @project.id %>"
+            class="ship-warning-modal"
+            data-controller="modal"
+            aria-labelledby="ship-warning-modal-<%= @project.id %>-title">
+      <div class="ship-warning-modal__body">
+        <h3 id="ship-warning-modal-<%= @project.id %>-title" class="ship-warning-modal__title">Warning</h3>
+        <p class="ship-warning-modal__text">
+          You have <strong><%= ship_warn_time %></strong> logged that you haven't posted a devlog for. If you ship without posting a devlog, this time will be lost!
+        </p>
+        <div class="ship-warning-modal__actions">
+          <button type="button"
+                  class="ship-warning-modal__btn ship-warning-modal__btn--secondary"
+                  onclick="document.getElementById('ship-warning-modal-<%= @project.id %>').close(); document.getElementById('composer-modal-<%= @project.id %>').showModal()">
+            Post a devlog
+          </button>
+          <%= link_to "Ship anyway →",
+                      new_project_ships_path(@project),
+                      class: "ship-warning-modal__btn ship-warning-modal__btn--primary",
+                      data: { turbo_frame: "_top" } %>
+        </div>
+      </div>
     </dialog>
   <% end %>
 

@@ -34,6 +34,9 @@ application.register("customs-warning", CustomsWarningController);
 import DecisionTreeController from "./decision_tree_controller";
 application.register("decision-tree", DecisionTreeController);
 
+import DisabledTooltipController from "./disabled_tooltip_controller";
+application.register("disabled-tooltip", DisabledTooltipController);
+
 import FallingStarController from "./falling_star_controller";
 application.register("falling-star", FallingStarController);
 

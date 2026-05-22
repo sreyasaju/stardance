@@ -404,12 +404,24 @@ class Project < ApplicationRecord
     /https:\/\/raw\.githubusercontent\.com\/[^\/]+\/[^\/]+\/[^\/]+\/.*README.*\.md/i.match?(uri.to_s)
   end
 
-  private
-
   def has_devlog_since_last_ship?
-    return true if last_ship_event.nil?
-    devlog_posts.where("posts.created_at > ?", last_ship_event.created_at).exists?
+    scope = devlog_posts
+    scope = scope.where("posts.created_at > ?", last_ship_event.created_at) if last_ship_event
+    scope.exists?
   end
+
+  # The recommended next action for this project is to post a devlog when the
+  # user either hasn't posted anything yet or their most recent post was a
+  # ship (i.e. progress is needed before the next ship).
+  def next_step_is_devlog?
+    last_devlog_at = devlog_posts.maximum(:created_at)
+    return true if last_devlog_at.nil?
+
+    last_ship_at = ship_event_posts.maximum(:created_at)
+    last_ship_at.present? && last_ship_at > last_devlog_at
+  end
+
+  private
 
   def previous_ship_event_has_payout?
     return true if last_ship_event.nil?
