@@ -161,17 +161,17 @@ class Projects::DevlogsController < ApplicationController
 
     return @preview_time = nil unless hackatime_keys.present?
 
-    hackatime_uid = current_user.hackatime_identity&.uid
-    return @preview_time = nil unless hackatime_uid.present?
+    # Pull from the same source the project show page uses (fetch_stats via
+    # try_sync_hackatime_data!) so the composer preview and the ship warning
+    # modal don't disagree by a few minutes from hitting different Hackatime
+    # API paths.
+    result = current_user.try_sync_hackatime_data!
+    return @preview_time = nil unless result
 
-    total_seconds = HackatimeService.fetch_total_seconds_for_projects(hackatime_uid, hackatime_keys)
-    return @preview_time = nil unless total_seconds
+    project_times = result[:projects] || {}
+    total_seconds = hackatime_keys.sum { |k| project_times[k].to_i }
 
-    already_logged = Post::Devlog.where(
-      id: @project.posts.where(postable_type: "Post::Devlog").select("postable_id::bigint")
-    ).sum(:duration_seconds) || 0
-
-    @preview_seconds = [ total_seconds - already_logged, 0 ].max
+    @preview_seconds = [ total_seconds - @project.duration_seconds, 0 ].max
     hours = @preview_seconds / 3600
     minutes = (@preview_seconds % 3600) / 60
     @preview_time = "#{hours}h #{minutes}m"

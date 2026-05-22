@@ -41,6 +41,7 @@ export default class extends Controller {
     this.element.addEventListener("turbo:frame-load", this.#onTimeFrameLoad);
     this.#resizeTextarea();
     this.#updateSubmit();
+    this.#loadPreviewTime();
   }
 
   disconnect() {
@@ -64,7 +65,6 @@ export default class extends Controller {
       const hasFiles = this.#files.length > 0;
       if (!hasBody && !hasFiles) {
         this.#composerOpen = false;
-        if (this.hasFooterTarget) this.footerTarget.hidden = true;
         this.#updateSubmit();
       }
     }, 150);
@@ -80,7 +80,13 @@ export default class extends Controller {
     }
     if (this.hasSubmitTarget) {
       this.submitTarget.disabled = !enabled;
+      // Toggle whichever button-component's disabled-modifier the target
+      // happens to use. Harmless if the class isn't present.
       this.submitTarget.classList.toggle("action-btn--disabled", !enabled);
+      this.submitTarget.classList.toggle(
+        "special-action-btn--disabled",
+        !enabled,
+      );
     }
   }
 
