@@ -23,6 +23,7 @@ class ProjectUrlProbeService
 
   def probe(url)
     return false if url.blank?
+    return false unless SafeUrl.safe_to_probe?(url)
     response = Faraday.new(url: url, headers: { "User-Agent" => USER_AGENT }) do |conn|
       conn.options.timeout = TIMEOUT
       conn.options.open_timeout = TIMEOUT

@@ -32,7 +32,7 @@ class Projects::ShipsController < ApplicationController
   end
 
   def create
-    # authorize @project, :ship?
+    authorize @project, :ship?
     wizard = session.delete(:ship_wizard) || {}
     review_instructions = (wizard["review_instructions"].presence || params[:review_instructions]).to_s.strip.presence
     mission_payout_path = wizard["mission_payout_path"].presence || params[:mission_payout_path]

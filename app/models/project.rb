@@ -442,6 +442,7 @@ class Project < ApplicationRecord
   def url_reachable?(url)
     cache_key = "url_reachable_#{Digest::MD5.hexdigest(url)}"
     Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+      next false unless SafeUrl.safe_to_probe?(url)
       uri = URI.parse(url)
       response = head_with_redirects(uri)
       response.is_a?(Net::HTTPSuccess) || response.is_a?(Net::HTTPRedirection)
@@ -462,7 +463,9 @@ class Project < ApplicationRecord
       response = http.request_head(uri.request_uri)
 
       if response.is_a?(Net::HTTPRedirection) && response["location"]
-        head_with_redirects(URI.parse(response["location"]), limit - 1)
+        next_uri = URI.parse(response["location"])
+        return Net::HTTPForbidden.new("1.1", "403", "Redirect target not safe") unless SafeUrl.safe_to_probe?(next_uri.to_s)
+        head_with_redirects(next_uri, limit - 1)
       else
         response
       end
