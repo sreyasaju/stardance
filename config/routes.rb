@@ -692,7 +692,6 @@ Rails.application.routes.draw do
         post :restore
       end
     end
-
   end
 
   namespace :certification, path: "admin/certification", constraints: AdminConstraint do
