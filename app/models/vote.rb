@@ -51,9 +51,13 @@ class Vote < ApplicationRecord
   belongs_to :project
   belongs_to :ship_event, class_name: "Post::ShipEvent", counter_cache: true
 
+  has_one :assignment, class_name: "Vote::Assignment", dependent: :nullify
+
   has_paper_trail on: [ :create, :update, :destroy ]
 
   after_commit :increment_user_vote_balance, on: :create
+
+  scope :payout_countable, -> { all }
 
   validates :reason, presence: true
   validate :reason_minimum_words
@@ -66,7 +70,7 @@ class Vote < ApplicationRecord
   private
 
   # Validations
-  
+
   def reason_minimum_words
     return if reason.blank?
 

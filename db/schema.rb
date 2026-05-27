@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_27_130616) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_27_135556) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -964,6 +964,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_27_130616) do
     t.index ["object_changes"], name: "index_versions_on_object_changes", using: :gin
   end
 
+  create_table "vote_assignments", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "ship_event_id", null: false
+    t.string "status", default: "assigned", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.bigint "vote_id"
+    t.index ["ship_event_id"], name: "index_vote_assignments_on_ship_event_id"
+    t.index ["user_id", "ship_event_id"], name: "index_vote_assignments_on_user_id_and_ship_event_id", unique: true
+    t.index ["user_id", "status"], name: "index_vote_assignments_on_user_id_and_status"
+    t.index ["user_id"], name: "index_vote_assignments_on_user_id"
+    t.index ["vote_id"], name: "index_vote_assignments_on_vote_id"
+  end
+
   create_table "vote_reason_embeddings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.vector "embedding", limit: 1536, null: false
@@ -1060,6 +1074,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_27_130616) do
   add_foreign_key "user_identities", "users"
   add_foreign_key "user_preferences", "users"
   add_foreign_key "user_vote_verdicts", "users"
+  add_foreign_key "vote_assignments", "post_ship_events", column: "ship_event_id"
+  add_foreign_key "vote_assignments", "users"
+  add_foreign_key "vote_assignments", "votes"
   add_foreign_key "votes", "post_ship_events", column: "ship_event_id"
   add_foreign_key "votes", "projects"
   add_foreign_key "votes", "users"
