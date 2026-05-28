@@ -505,7 +505,6 @@ Rails.application.routes.draw do
     get  :interests_result,          to: "wizard#interests_result"
     get  :name,                      to: "wizard#name"
     post :name,                      to: "wizard#submit_name"
-    get  :check_name,                to: "wizard#check_name"
   end
 
   namespace :admin, constraints: AdminConstraint do
@@ -716,6 +715,8 @@ Rails.application.routes.draw do
       get :following
     end
   end
+
+  resource :username_availability, only: [ :show ], controller: "users/username_availabilities"
 
   # Autocomplete search endpoints (used by the bio editor and elsewhere).
   get "search/users",    to: "search#users",    as: :search_users

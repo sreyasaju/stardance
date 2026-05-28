@@ -34,7 +34,6 @@
 #  verification_status          :string           default("needs_submission"), not null
 #  vote_balance                 :integer          default(0), not null
 #  votes_count                  :integer
-#  voting_locked                :boolean          default(FALSE), not null
 #  ysws_eligible                :boolean          default(FALSE), not null
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
@@ -51,13 +50,13 @@
 #
 one:
   email: one@example.test
-  display_name: MyString
+  display_name: user_one
   slack_id: U_FIXTURE_ONE
   votes_count: 1
 
 two:
   email: two@example.test
-  display_name: MyString
+  display_name: user_two
   slack_id: U_FIXTURE_TWO
   votes_count: 1
 
