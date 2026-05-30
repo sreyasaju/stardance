@@ -25,6 +25,7 @@ module Sessions
       user = user_for(identity, fields)
       is_new_user = user.new_record?
       guest_collision = guest_collision?(user)
+      had_prior_attestation = user.age_attestation.present?
 
       identity = resolve_uid_change(identity, user, fields[:slack_id], fields[:uid])
       identity.access_token = access_token
@@ -41,7 +42,7 @@ module Sessions
 
       user.apply_hca_verification_payload!(identity_data)
 
-      if age_violation?(user, identity_data)
+      if had_prior_attestation && age_violation?(user, identity_data)
         return age_violation_result(user, identity, identity_data, fields, is_new_user)
       end
 
