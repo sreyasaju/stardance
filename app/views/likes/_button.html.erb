@@ -1,5 +1,5 @@
 <%
-  liked = if current_user && defined?(@liked_devlog_ids) && @liked_devlog_ids.present?
+  liked = if current_user && defined?(@liked_devlog_ids)
     @liked_devlog_ids.include?(likeable.id)
   else
     current_user && likeable.likes.exists?(user: current_user)

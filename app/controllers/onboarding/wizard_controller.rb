@@ -110,6 +110,9 @@ class Onboarding::WizardController < ApplicationController
 
   def experience_result
     @level = current_user.experience_level
+    @peer_count = User.where(experience_level: @level)
+                      .where.not(id: current_user.id)
+                      .count
   end
 
   def interests
@@ -134,6 +137,16 @@ class Onboarding::WizardController < ApplicationController
 
   def interests_result
     @interests = current_user.interests || []
+    if @interests.present? && @interests != [ User::INTERESTS_UNKNOWN ]
+      @peer_count = User.where("interests && ARRAY[?]::varchar[]", @interests)
+                        .where.not(id: current_user.id)
+                        .count
+      @beginner_peer_count = User.where("interests && ARRAY[?]::varchar[]", @interests)
+                                 .where(experience_level: "none")
+                                 .where.not(id: current_user.id)
+                                 .count
+      @featured_projects = Onboarding::FeaturedProjects.for_interests(@interests)
+    end
   end
 
   def name

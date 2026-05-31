@@ -9,7 +9,7 @@
      data-shop-mode-value="<%= @shop_mode %>">
 
   <% if @shop_mode == :preview %>
-    <%= render "shop/preview_banner" %>
+    <%= render "shop/items/preview_banner" %>
   <% end %>
 
   <% tutorial_active = @shop_mode == :tutorial && @tutorial_items.values.all?(&:present?) %>
@@ -20,12 +20,31 @@
       <div class="shop-hub__tutorial-card-header">
         <h2 class="shop-hub__tutorial-card-title">Complete the tutorial to unlock the shop</h2>
         <p class="shop-hub__tutorial-card-subtitle">Pick one of these to walk through how ordering works.</p>
+        <div class="shop-hub__progress-list">
+          <div class="shop-hub__progress-item shop-hub__progress-item--done">
+            <span class="shop-hub__progress-check">✓</span>
+            Create a project
+          </div>
+          <div class="shop-hub__progress-item shop-hub__progress-item--done">
+            <span class="shop-hub__progress-check">✓</span>
+            Link Hackatime
+          </div>
+          <% idv_done = current_user&.identity_verified? %>
+          <div class="shop-hub__progress-item <%= 'shop-hub__progress-item--done' if idv_done %>">
+            <span class="shop-hub__progress-check"><%= idv_done ? "✓" : "3" %></span>
+            <% if idv_done %>
+              Verify your identity
+            <% else %>
+              <%= button_to "Verify your identity", my_verification_refresh_path(idv_check: 1), method: :post, class: "shop-hub__progress-link", form: { class: "shop-hub__progress-form" } %>
+            <% end %>
+          </div>
+        </div>
       </div>
       <div class="shop-hub__picks">
         <ul class="shop-hub__picks-row" id="shop-picks">
           <% [ @tutorial_items[:stickers], @tutorial_items[:nothing] ].compact.each do |item| %>
             <li class="shop-hub__items-card">
-              <%= render "shop/item_card",
+              <%= render "shop/items/item_card",
                     item: item,
                     mode: :tutorial,
                     region: @user_region,
@@ -123,7 +142,7 @@
             <ul class="shop-hub__items-grid" data-horizontal-scroll-target="track">
               <% @new_items.each do |item| %>
                 <li class="shop-hub__items-card">
-                  <%= render "shop/item_card",
+                  <%= render "shop/items/item_card",
                         item: item,
                         mode: @shop_mode,
                         region: @user_region,
@@ -158,7 +177,7 @@
             <ul class="shop-hub__items-grid" data-horizontal-scroll-target="track">
               <% @popular_items.each do |item| %>
                 <li class="shop-hub__items-card">
-                  <%= render "shop/item_card",
+                  <%= render "shop/items/item_card",
                         item: item,
                         mode: @shop_mode,
                         region: @user_region,
@@ -191,4 +210,4 @@
   <% end %>
 </div>
 
-<%= render "shop/suggestion_modal" if current_user && Flipper.enabled?(:shop_suggestion_box, current_user) && !current_user.has_dismissed?("shop_suggestion_box") %>
+<%= render "shop/items/suggestion_modal" if current_user && Flipper.enabled?(:shop_suggestion_box, current_user) && !current_user.has_dismissed?("shop_suggestion_box") %>
