@@ -148,6 +148,7 @@
             <th></th>
             <th>Name</th>
             <th>Type</th>
+            <th>Categories</th>
             <th>Stardust Cost</th>
             <th>USD Cost</th>
             <th>Regions</th>
@@ -174,6 +175,10 @@
                   <%= item.type.to_s.gsub("ShopItem::", "") %>
                 </span>
               </td>
+              <td>
+               <% cats = item.shop_categories %>
+               <%= cats.any? ? cats.map(&:title).join(", ") : "—" %>
+             </td>
               <td><%= stardust_icon %> <%= item.ticket_cost.to_i %></td>
               <td><%= item.usd_cost ? number_to_currency(item.usd_cost) : "—" %></td>
               <td>
@@ -220,7 +225,6 @@
           <% end %>
         </tbody>
       </table>
-
       <div class="shop-dashboard__pagination">
         <% if @pagy.page > 1 %>
           <%= link_to "← Previous", admin_shop_path(search: params[:search], type: params[:type], enabled: params[:enabled], carousel: params[:carousel], page: @pagy.page - 1) %>
