@@ -4,7 +4,6 @@ import "chartkick/chart.js";
 import { Chart, registerables } from "chart.js";
 import "./controllers";
 import * as ActiveStorage from "@rails/activestorage";
-import "./lib/track";
 
 Turbo.session.drive = false;
 Chart.register(...registerables);

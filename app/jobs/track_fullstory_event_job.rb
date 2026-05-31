@@ -16,8 +16,12 @@ class TrackFullstoryEventJob < ApplicationJob
       session: { use_most_recent: true }
     }.to_json
 
-    Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, open_timeout: 5, read_timeout: 5) do |http|
+    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, open_timeout: 5, read_timeout: 5) do |http|
       http.request(req)
+    end
+
+    unless response.is_a?(Net::HTTPSuccess)
+      Rails.logger.warn("FullStory event API returned #{response.code}: #{response.body.to_s.truncate(200)}")
     end
   end
 end
