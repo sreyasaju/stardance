@@ -21,6 +21,7 @@ class Projects::ShipsController < ApplicationController
     probe_result = reship ? ProjectUrlProbeService.new(@project).call : nil
 
     @project.with_lock do
+      @project.submit_for_review!
       ship_event = Post::ShipEvent.new(body: params[:ship_update].to_s.strip)
       ship_event.uploading_attachments = params.dig(:ship_event, :attachments).present?
       ship_event.save!
