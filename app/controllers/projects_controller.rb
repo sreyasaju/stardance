@@ -122,6 +122,9 @@ class ProjectsController < ApplicationController
     end
 
     track_event "Viewed project", project_id: @project.id
+    if current_user.present? && !@is_member
+      @project.send_gorse_feedback_later(user: current_user, item: @project, feedback_type: :read, comment: "project_show")
+    end
 
     @latest_ship_post = @posts.find { |post| post.postable_type == "Post::ShipEvent" }
     latest_ship_event = @latest_ship_post&.postable

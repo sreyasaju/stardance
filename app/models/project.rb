@@ -41,6 +41,7 @@ class Project < ApplicationRecord
   include AASM
   include SoftDeletable
   include SemanticSearchIndexable
+  include Gorse::SyncableProject
 
   has_ferret_search :title, :description
   semantic_search_indexable type: "project"
