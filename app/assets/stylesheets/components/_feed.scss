@@ -928,22 +928,23 @@
     width: 40px;
     height: 40px;
     -webkit-mask-size: auto 40px;
-            mask-size: auto 40px;
-    transition: -webkit-mask-position 1s steps(28), mask-position 1s steps(28);
+    mask-size: auto 40px;
+    transition:
+      -webkit-mask-position 1s steps(28),
+      mask-position 1s steps(28);
     transition-duration: 0s;
 
     &.is-liked {
       -webkit-mask-position: -1120px 0;
-              mask-position: -1120px 0;
+      mask-position: -1120px 0;
     }
 
     &.is-animating {
       transition-duration: 1s;
       -webkit-mask-position: -1120px 0;
-              mask-position: -1120px 0;
+      mask-position: -1120px 0;
     }
   }
-
 
   .like-button__btn--liked {
     color: var(--color-space-accent);
