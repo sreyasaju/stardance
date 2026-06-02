@@ -197,6 +197,10 @@ class User < ApplicationRecord
   include User::Preferences
   include User::UsernameBloomSync
 
+  # Tracks platform signups/verifications for the raffle referral program
+  # (no-ops unless the signup carried a raffle referral code). See the engine.
+  include Raffle::ReferralTrackable
+
   after_create_commit :increment_signup_counter, if: -> { Flipper.enabled?(:new_onboarding) }
 
   KERBAL_FIRST_NAMES = %w[
