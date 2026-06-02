@@ -1,0 +1,36 @@
+<% content_for :title, "Participant, #{@participant.github_login}" %>
+<%= render "admin/raffles/shared/nav" %>
+
+<h1><%= @participant.github_login %> <code><%= @participant.code %></code></h1>
+
+<ul>
+  <li>Name: <%= @participant.name || "—" %></li>
+  <li>Email: <%= @participant.github_email || "—" %></li>
+  <li>Links:
+    <code><%= @participant.referral_url(:web) %></code> ·
+    <code><%= @participant.referral_url(:discord) %></code>
+  </li>
+</ul>
+
+<h2>Referrals</h2>
+<% if @referrals.any? %>
+  <table>
+    <thead>
+      <tr><th>Referred user</th><th>Channel</th><th>Status</th><th>Tickets</th><th>Week</th><th>Verified</th></tr>
+    </thead>
+    <tbody>
+      <% @referrals.each do |referral| %>
+        <tr>
+          <td><%= referral.referred_user&.display_name || "User ##{referral.referred_user_id}" %></td>
+          <td><%= referral.channel %></td>
+          <td><%= referral.status %></td>
+          <td><%= referral.tickets_awarded %></td>
+          <td><%= referral.credited_week&.number || "—" %></td>
+          <td><%= referral.verified_at&.to_date || "—" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p>No referrals yet.</p>
+<% end %>
