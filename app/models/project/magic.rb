@@ -18,6 +18,9 @@ class Project::Magic
 
   def withdraw_nomination(reviewer)
     return false unless ensure_nominated
+    # Once granted, the nomination is settled — clearing it here would strip the
+    # nominator while leaving the project a Super Star. Un-fire via revoke first.
+    return false unless ensure_not_fire
     perform(reviewer, "withdraw_fire_nomination") do
       project.update!(nominated_fire_at: nil, nominated_fire_by: nil)
     end
