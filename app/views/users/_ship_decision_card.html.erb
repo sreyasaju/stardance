@@ -6,7 +6,7 @@
   message = if approved
     "This ship is approved and ready for voting."
   else
-    "This ship needs updates before it can continue."
+    "This needs changes before we can consider it shipped. Review the Shipwright feedback, make updates, then ship again."
   end
   decided_on = decision.decided_on || post.created_at
   reviewer_name = decision.reviewer&.display_name.presence
@@ -24,7 +24,7 @@
           aria-label="Who are Shipwrights?"
           data-controller="tooltip"
           data-tooltip-title-value="Who are Shipwrights?"
-          data-tooltip-message-value="Shipwrights review submitted ships for quality, working demos, clear writeups, and program rules before projects move forward."
+          data-tooltip-message-value="Shipwrights are expert shippers who review submitted ships for quality, working demos, clear writeups, and program rules before projects move forward."
           data-tooltip-position-value="top">Shipwright Verdict</span>
   </div>
 
