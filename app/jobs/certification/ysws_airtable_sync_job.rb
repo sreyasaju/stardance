@@ -72,7 +72,7 @@ module Certification
       if existing_record && existing_record["Automation - YSWS Record ID"].present?
         raise StandardError, "This review is already in the unified db"
       end
-    rescue Faraday::Error => e
+    rescue Faraday::Error, Norairrecord::RecordNotFoundError => e
       # If Airtable fetch fails, log and allow sync to continue
       Rails.logger.warn "[YswsAirtableSyncJob] Could not check unified DB status: #{e.message}"
     end
