@@ -9,7 +9,7 @@
 #  certification_status       :string           default("pending")
 #  feedback_reason            :text
 #  feedback_video_url         :string
-#  hours                      :float
+#  hours_at_payout            :float
 #  legacy_payout_deduction    :float
 #  multiplier                 :float
 #  originality_median         :decimal(5, 2)
