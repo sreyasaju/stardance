@@ -25,7 +25,7 @@
 #  fk_rails_...  (vote_id => votes.id)
 #
 class Vote::Assignment < ApplicationRecord
-  STATUSES = %w[assigned submitted skipped].freeze
+  STATUSES = %w[assigned submitted skipped expired].freeze
 
   belongs_to :user
   belongs_to :ship_event, class_name: "Post::ShipEvent", inverse_of: :vote_assignments
@@ -34,7 +34,8 @@ class Vote::Assignment < ApplicationRecord
   enum :status, {
     assigned: "assigned",
     submitted: "submitted",
-    skipped: "skipped"
+    skipped: "skipped",
+    expired: "expired"
   }, default: :assigned
 
   validates :status, presence: true, inclusion: { in: STATUSES }
@@ -49,8 +50,29 @@ class Vote::Assignment < ApplicationRecord
       .first
   end
 
-  def self.assign_to(user)
-    current_for(user) || assign_new_to(user)
+  def self.assign_to(user, user_agent: nil)
+    matchmaker = Vote::Matchmaker.new(user, user_agent: user_agent)
+
+    if current = current_for(user)
+      current.refresh(matchmaker)
+    else
+      assign_new_to(user, matchmaker)
+    end
+  end
+
+  def refresh(matchmaker = Vote::Matchmaker.new(user))
+    if ship_event.certification_status == "rejected"
+      replace_with(matchmaker.next_ship_event)
+    # we don't have the countable scope... yet!
+    elsif ship_event.payout.present? || ship_event.votes_count >= Post::ShipEvent::VOTES_TO_LEAVE_POOL
+      if replacement = matchmaker.next_unpaid_ship_event
+        replace_with(replacement)
+      else
+        self
+      end
+    else
+      self
+    end
   end
 
   def submit_vote(attributes)
@@ -74,31 +96,25 @@ class Vote::Assignment < ApplicationRecord
   end
 
   private
-    def self.assign_new_to(user)
-      if ship_event = assignable_ship_events_for(user).order(Arel.sql("RANDOM()")).first
+    def self.assign_new_to(user, matchmaker)
+      if ship_event = matchmaker.next_ship_event
         create!(user: user, ship_event: ship_event)
       end
     end
 
-    def self.assignable_ship_events_for(user)
-      excluded_ship_event_ids = where(user: user).where(status: %w[submitted skipped]).select(:ship_event_id)
-      voted_ship_event_ids = Vote.where(user: user).select(:ship_event_id)
-      own_ship_event_ids = Post::ShipEvent
-        .joins(post: { project: :memberships })
-        .where(project_memberships: { user_id: user.id })
-        .select(:id)
+    def replace_with(replacement_ship_event)
+      transaction do
+        update!(status: :expired)
 
-      Post::ShipEvent
-        .joins(:post)
-        .where(certification_status: %w[pending approved])
-        .where.not(id: excluded_ship_event_ids)
-        .where.not(id: voted_ship_event_ids)
-        .where.not(id: own_ship_event_ids)
+        if replacement_ship_event
+          self.class.create!(user: user, ship_event: replacement_ship_event)
+        end
+      end
     end
 
     def ship_event_can_be_assigned
-      unless ship_event&.certification_status.in?(%w[pending approved])
-        errors.add(:ship_event, "must be pending or approved")
+      unless ship_event&.certification_status == "approved"
+        errors.add(:ship_event, "must be approved")
       end
     end
 

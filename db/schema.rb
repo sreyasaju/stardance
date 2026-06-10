@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_09_182558) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_10_143600) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -535,15 +535,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_182558) do
   end
 
   create_table "post_ship_events", force: :cascade do |t|
-    t.float "base_hours"
     t.string "body"
-    t.boolean "bridge", default: false, null: false
     t.string "certification_status", default: "pending"
     t.datetime "created_at", null: false
     t.text "feedback_reason"
     t.string "feedback_video_url"
-    t.float "hours"
-    t.float "legacy_payout_deduction"
+    t.float "hours_at_payout"
+    t.float "hours_at_ship"
     t.float "multiplier"
     t.decimal "originality_median", precision: 5, scale: 2
     t.decimal "originality_percentile", precision: 5, scale: 2
@@ -565,7 +563,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_182558) do
     t.decimal "usability_median", precision: 5, scale: 2
     t.decimal "usability_percentile", precision: 5, scale: 2
     t.integer "votes_count", default: 0, null: false
-    t.integer "voting_scale_version", default: 2, null: false
   end
 
   create_table "posts", force: :cascade do |t|

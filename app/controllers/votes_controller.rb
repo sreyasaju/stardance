@@ -4,9 +4,7 @@ class VotesController < ApplicationController
   def new
     authorize Vote
 
-    if @voting_open && current_user && @has_shipped
-      load_assignment
-    end
+    load_assignment
   end
 
   def create
@@ -32,7 +30,9 @@ class VotesController < ApplicationController
     end
 
     def load_assignment
-      @assignment = Vote::Assignment.assign_to(current_user)
+      return unless current_user
+
+      @assignment = Vote::Assignment.assign_to(current_user, user_agent: request.user_agent)
       if @assignment
         @ship_event = @assignment.ship_event
         @project = @ship_event.project
