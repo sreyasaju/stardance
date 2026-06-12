@@ -254,6 +254,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_150742) do
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
+  create_table "daily_rolls", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.date "rolled_on", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.integer "value", null: false
+    t.index ["rolled_on", "value"], name: "index_daily_rolls_on_rolled_on_and_value"
+    t.index ["user_id", "rolled_on"], name: "index_daily_rolls_on_user_id_and_rolled_on", unique: true
+    t.index ["user_id"], name: "index_daily_rolls_on_user_id"
+  end
+
   create_table "devlog_versions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "devlog_id", null: false
@@ -1374,6 +1385,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_150742) do
   add_foreign_key "certification_ysws_reviews", "users", column: "reviewer_id"
   add_foreign_key "certification_ysws_reviews", "users", column: "spotchecked_by_id"
   add_foreign_key "comments", "users"
+  add_foreign_key "daily_rolls", "users"
   add_foreign_key "devlog_versions", "post_devlogs", column: "devlog_id"
   add_foreign_key "devlog_versions", "users"
   add_foreign_key "follows", "users", column: "followed_id"
