@@ -8,8 +8,8 @@
 # project named after `projectName`, which the user then links like any other
 # Hackatime project.
 class LookoutService
-  BASE_URL = ENV.fetch("LOOKOUT_BASE_URL", "https://lookout.hackclub.com")
-  API_KEY  = ENV.fetch("LOOKOUT_API_KEY", "")
+  BASE_URL = Rails.application.credentials.dig(:lookout, :base_url) || ENV.fetch("LOOKOUT_BASE_URL", "https://lookout.hackclub.com")
+  API_KEY  = Rails.application.credentials.dig(:lookout, :api_key) || ENV.fetch("LOOKOUT_API_KEY", "")
 
   class << self
     # Server-to-server. Returns the parsed body ({ token:, sessionId:,
