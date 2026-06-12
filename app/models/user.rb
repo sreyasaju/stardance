@@ -216,6 +216,7 @@ class User < ApplicationRecord
   validates :display_name, format: { with: USERNAME_FORMAT, message: "can only contain letters, numbers, hyphens, and underscores" }, if: :display_name_changed?
   validates :hcb_email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validates :user_ref, length: { maximum: 100 }, allow_blank: true
+  validates :manual_outpost_ticket_approval, format: { with: /\Ahttps?:\/\/.+\z/i, message: "must be an HTTP(S) URL" }, allow_blank: true
 
   include User::Notifications
   include User::Roles
