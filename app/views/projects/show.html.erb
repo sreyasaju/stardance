@@ -552,6 +552,19 @@
                       tooltip_position_value: "top"
                     }
                   ) %>
+            <% elsif !@project.info_complete? %>
+              <%= render ActionButtonComponent.new(
+                    text: "Submit Design to Get Project Funding",
+                    variant: :primary,
+                    type: :button,
+                    icon: "icons/rocket.png",
+                    disabled: :soft,
+                    data: {
+                      controller: "tooltip",
+                      tooltip_message_value: "Complete project info",
+                      tooltip_position_value: "top"
+                    }
+                  ) %>
             <% else %>
               <%= render ActionButtonComponent.new(
                     text: "Submit Design to Get Project Funding",
