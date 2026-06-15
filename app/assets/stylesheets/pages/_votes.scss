@@ -70,22 +70,6 @@
   top: var(--space-m);
 }
 
-.vote-page__empty {
-  max-width: 720px;
-  margin: var(--space-xl) auto;
-  padding: var(--space-xl);
-  border: 2px solid var(--color-space-border);
-  border-radius: var(--profile-radius);
-  background: var(--color-set-2-bg);
-  text-align: center;
-}
-
-.vote-page__empty-text {
-  margin: var(--space-s) 0 0;
-  color: var(--color-space-text-muted);
-  font-size: var(--font-size-l);
-}
-
 // `.project-show` sets `width: min(100%, 922px); align-self: center;` —
 // fine here since the vote main column tops out around that. In the vote
 // context we don't want the back/edit/follow chrome from the projects page,
