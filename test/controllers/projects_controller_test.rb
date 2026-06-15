@@ -68,6 +68,25 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".project-show__onboarding-header-body", text: /Link Hackatime to start tracking your time/
   end
 
+  test "empty hardware project onboarding shows the getting started guide button" do
+    @project.update!(hardware_stage: "design")
+    sign_in @owner
+
+    get project_path(@project)
+
+    assert_response :success
+    assert_select ".project-show__onboarding a.project-show__onboarding-cta[href=?]", guide_path("starting-hardware"), text: /Read here to get started/
+  end
+
+  test "empty software project onboarding does not show the hardware getting started button" do
+    sign_in @owner
+
+    get project_path(@project)
+
+    assert_response :success
+    assert_select "a.project-show__onboarding-cta", 0
+  end
+
   test "owner with hackatime identity does not see hackatime setup card" do
     User::Identity.insert_all([
       {

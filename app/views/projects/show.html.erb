@@ -734,6 +734,15 @@
             </p>
           <% end %>
         </header>
+
+        <% if Flipper.enabled?(:hardware_flow, current_user) && @project.hardware? %>
+          <%= link_to guide_path("starting-hardware"),
+                      class: "action-btn action-btn--large action-btn--primary project-show__onboarding-cta",
+                      target: "_blank", rel: "noopener",
+                      data: { turbo: false } do %>
+            Read here to get started<%= inline_svg_tag "icons/right-arrow.svg", class: "action-btn__icon action-btn__icon--trailing", aria: { hidden: true } %>
+          <% end %>
+        <% end %>
       </section>
     <% end %>
 
