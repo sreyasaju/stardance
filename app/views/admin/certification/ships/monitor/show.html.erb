@@ -1,0 +1,121 @@
+<% content_for :title, "Shipwright monitor" %>
+
+<div class="app-layout app-layout--wide">
+  <div class="app-layout__main app-layout__main--wide ship-monitor">
+    <%= link_to "← ship queue", admin_certification_ships_path, class: "ship-monitor__back" %>
+
+    <header class="ship-monitor__header">
+      <h1>Shipwright monitor</h1>
+    </header>
+
+    <section class="ship-monitor__section">
+      <h2 class="ship-monitor__section-title">Queue health</h2>
+      <div class="ship-monitor__metrics">
+        <% over_target = @stats[:pending] - @stats[:queue_target] %>
+        <div class="ship-monitor__metric">
+          <span class="ship-monitor__metric-label">In queue</span>
+          <span class="ship-monitor__metric-value <%= over_target > 0 ? 'is-negative' : 'is-positive' %>">
+            <%= @stats[:pending] %>
+          </span>
+          <span class="ship-monitor__metric-hint">
+            <%= over_target > 0 ? "#{over_target} over target of #{@stats[:queue_target]}" : "at or under target" %>
+          </span>
+        </div>
+
+        <div class="ship-monitor__metric">
+          <span class="ship-monitor__metric-label">Overdue</span>
+          <span class="ship-monitor__metric-value <%= @stats[:overdue_pending] > 0 ? 'is-negative' : 'is-positive' %>">
+            <%= @stats[:overdue_pending] %>
+          </span>
+          <span class="ship-monitor__metric-hint">past <%= @stats[:sla_days] %>-day SLA</span>
+        </div>
+
+        <div class="ship-monitor__metric">
+          <span class="ship-monitor__metric-label">Oldest waiting</span>
+          <% if @stats[:oldest_pending] %>
+            <span class="ship-monitor__metric-value is-negative">
+              <%= time_ago_in_words(@stats[:oldest_pending].created_at) %>
+            </span>
+            <span class="ship-monitor__metric-hint">
+              <%= link_to "##{@stats[:oldest_pending].id}", admin_certification_ship_path(@stats[:oldest_pending]),
+                    class: "ship-monitor__link" %>
+            </span>
+          <% else %>
+            <span class="ship-monitor__metric-value is-positive">—</span>
+            <span class="ship-monitor__metric-hint">queue clear</span>
+          <% end %>
+        </div>
+
+        <div class="ship-monitor__metric">
+          <span class="ship-monitor__metric-label">Reviewed today</span>
+          <span class="ship-monitor__metric-value">
+            <%= @stats[:decisions_today] %>
+          </span>
+          <span class="ship-monitor__metric-hint"><%= @stats[:new_today] %> received</span>
+        </div>
+
+        <div class="ship-monitor__metric">
+          <span class="ship-monitor__metric-label">This week</span>
+          <span class="ship-monitor__metric-value <%= @stats[:decisions_this_week] >= @stats[:new_this_week] ? 'is-positive' : 'is-negative' %>">
+            <%= @stats[:decisions_this_week] %>
+          </span>
+          <span class="ship-monitor__metric-hint"><%= @stats[:new_this_week] %> received</span>
+        </div>
+
+        <div class="ship-monitor__metric">
+          <span class="ship-monitor__metric-label">All-time rate</span>
+          <span class="ship-monitor__metric-value">
+            <%= @stats[:approval_rate] ? "#{@stats[:approval_rate]}%" : "—" %>
+          </span>
+          <span class="ship-monitor__metric-hint">
+            <%= @stats[:approved] %> approved · <%= @stats[:returned] %> returned
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section class="ship-monitor__section">
+      <h2 class="ship-monitor__section-title">Reviewer performance</h2>
+
+      <% if @reviewers.empty? %>
+        <div class="ship-monitor__empty">No completed reviews yet.</div>
+      <% else %>
+        <div class="ship-monitor__table-wrap">
+          <table class="ship-monitor__table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Reviewer</th>
+                <th>Today</th>
+                <th>This week</th>
+                <th>Approved</th>
+                <th>Returned</th>
+                <th>Total</th>
+                <th>Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @reviewers.each_with_index do |r, i| %>
+                <% rate = r.total > 0 ? (r.approved_count * 100.0 / r.total).round : 0 %>
+                <tr>
+                  <td class="ship-monitor__cell-rank"><%= i + 1 %></td>
+                  <td class="ship-monitor__cell-name"><%= r.display_name %></td>
+                  <td class="ship-monitor__cell-num"><%= r.today_count %></td>
+                  <td class="ship-monitor__cell-num"><%= r.week_count %></td>
+                  <td class="ship-monitor__cell-num">
+                    <span class="status-pill status-pill--approved"><%= r.approved_count %></span>
+                  </td>
+                  <td class="ship-monitor__cell-num">
+                    <span class="status-pill status-pill--returned"><%= r.returned_count %></span>
+                  </td>
+                  <td class="ship-monitor__cell-num ship-monitor__cell-num--bold"><%= r.total %></td>
+                  <td class="ship-monitor__cell-num"><%= rate %>%</td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+    </section>
+  </div>
+</div>
