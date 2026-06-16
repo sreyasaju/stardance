@@ -3,6 +3,7 @@ class Home::FeedsController < ApplicationController
 
   FEED_LIMIT = 20
   RECOMMENDATION_POOL = 100 # after this, we fallback to SQL
+  FeedPage = Struct.new(:page, :limit, :offset, :next, keyword_init: true)
 
   skip_before_action :remember_page
   before_action :resume_or_expire_onboarding!, if: -> { current_user.present? }
@@ -21,30 +22,31 @@ class Home::FeedsController < ApplicationController
     recommended = recommended_posts
     backfill = feed_scope.where.not(id: recommended.map(&:id))
 
-    total = recommended.size + backfill.count
-    @pagy = feed_pagy(total)
-    @feed_posts, @feed_post_sources = compose_feed(recommended, backfill, @pagy)
+    @pagy = feed_pagy
+    @feed_posts, @feed_post_sources, has_next = compose_feed(recommended, backfill, @pagy)
+    @pagy.next = @pagy.page + 1 if has_next
 
     preload_feed_associations(@feed_posts)
     @liked_devlog_ids = liked_devlog_ids_for(@feed_posts)
     @reposted_post_ids = reposted_post_ids_for(@feed_posts)
+    @show_post_views = Flipper.enabled?(:week_2_release, current_user)
   end
 
   def recommended_posts
     Gorse::Recommendations.new(user: current_user).posts(limit: RECOMMENDATION_POOL)
   end
 
-  def feed_pagy(total)
-    last_page = [ (total.to_f / FEED_LIMIT).ceil, 1 ].max
-    page = [ [ params[:page].to_i, 1 ].max, last_page ].min
-    Pagy::Offset.new(count: total, page: page, limit: FEED_LIMIT)
+  def feed_pagy
+    page = [ params[:page].to_i, 1 ].max
+    FeedPage.new(page: page, limit: FEED_LIMIT, offset: (page - 1) * FEED_LIMIT)
   end
 
   def compose_feed(recommended, backfill, pagy)
-    rec_slice = pagy.offset < recommended.size ? Array(recommended[pagy.offset, pagy.limit]) : []
+    page_candidate_limit = pagy.limit + 1
+    rec_slice = pagy.offset < recommended.size ? Array(recommended[pagy.offset, page_candidate_limit]) : []
     candidates = rec_slice.map { |post| [ post, "recommended" ] }
 
-    remaining = pagy.limit - rec_slice.size
+    remaining = page_candidate_limit - rec_slice.size
     if remaining.positive?
       sql_offset = [ pagy.offset - recommended.size, 0 ].max
       backfill.offset(sql_offset).limit(remaining).each do |post|
@@ -55,7 +57,8 @@ class Home::FeedsController < ApplicationController
       end
     end
 
-    dedupe_by_content(candidates)
+    posts, sources = dedupe_by_content(candidates.first(pagy.limit))
+    [ posts, sources, candidates.size > pagy.limit ]
   end
 
   # don't want to show dupe reposts
