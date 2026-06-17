@@ -51,7 +51,6 @@ export default class extends Controller {
     "reviewerTotals",
     "reviewerDecisions",
     "reviewerReturned",
-    "reviewerApproved",
   ];
   static values = { data: Array, reviewerData: Array };
 
@@ -361,11 +360,7 @@ export default class extends Controller {
   }
 
   initReviewerCharts() {
-    const targets = [
-      this.reviewerDecisionsTarget,
-      this.reviewerReturnedTarget,
-      this.reviewerApprovedTarget,
-    ];
+    const targets = [this.reviewerDecisionsTarget, this.reviewerReturnedTarget];
     this.reviewerCharts = targets.map((canvas) => this.#makeLine(canvas, []));
     this.charts.push(...this.reviewerCharts);
   }
@@ -393,10 +388,9 @@ export default class extends Controller {
         };
       });
 
-    const [decisionsChart, returnedChart, approvedChart] = this.reviewerCharts;
+    const [decisionsChart, returnedChart] = this.reviewerCharts;
     decisionsChart.data.datasets = lineDatasets("total");
     returnedChart.data.datasets = lineDatasets("returned");
-    approvedChart.data.datasets = lineDatasets("approved");
     this.reviewerCharts.forEach((c) => c.update());
 
     this.renderReviewerTotals(selected, reviewers);
