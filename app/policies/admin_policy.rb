@@ -31,6 +31,21 @@ class AdminPolicy < ApplicationPolicy
     user.admin?
   end
 
+  def view_leaderboard?
+    user.admin? || user.fulfillment_person? || user.fraud_dept?
+  end
+
+  def view_fraud_review_filters?
+    user.admin? || user.fraud_dept?
+  end
+
+  def manage_shop?
+    user.admin?
+  end
+
+  def manage_draft_shop_items?
+    user.admin? || user.shop_manager?
+  end
   def access_raffles?
     user.admin? || user.has_role?(:raffle_admin)
   end
