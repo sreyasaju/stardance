@@ -655,10 +655,7 @@
 
     <% if is_member && params[:just_shipped].present? %>
       <%
-        latest_submission = @project.posts
-          .where(postable_type: "Post::ShipEvent")
-          .order(created_at: :desc)
-          .first&.postable&.mission_submission
+        latest_submission = @latest_ship_post&.postable&.mission_submission
         is_fixed_payout = latest_submission&.payout_path == "static_prize" &&
                           latest_submission&.mission&.fixed_stardust_payout&.positive?
 
@@ -769,11 +766,19 @@
           <% elsif entry.postable_type == "Post::ShipEvent" %>
             <% ship_index += 1 %>
             <% recert_id = ((is_member || current_user&.can_review?) && @project.needs_changes? && ship_index == 1) ? "recert-modal-#{@project.id}" : nil %>
+            <%
+              mission_sub = entry.postable&.mission_submission
+              mission_modal_id = if (is_member || current_user&.admin?) && @rejected_mission_sub && mission_sub == @rejected_mission_sub
+                "mission-resubmit-modal-#{@project.id}"
+              end
+            %>
             <%= render "projects/ship_card",
                        post: entry,
                        project: @project,
                        ship_number: ship_count - ship_index + 1,
-                       recert_modal_id: recert_id %>
+                       recert_modal_id: recert_id,
+                       is_member: is_member,
+                       mission_resubmit_modal_id: mission_modal_id %>
           <% else %>
             <%= render PostComponent.new(post: entry, current_user: current_user, theme: :profile_dark) %>
           <% end %>
@@ -827,6 +832,10 @@
 
   <% if (is_member || current_user&.can_review?) && @project.needs_changes? %>
     <%= render "projects/recert_modal", project: @project, is_member: is_member %>
+  <% end %>
+
+  <% if (is_member || current_user&.admin?) && @rejected_mission_sub %>
+    <%= render "projects/mission_resubmit_modal", project: @project, submission: @rejected_mission_sub, is_member: is_member %>
   <% end %>
 
   <% if is_member && @composer_devlog && @composer_projects %>

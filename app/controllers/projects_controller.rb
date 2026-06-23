@@ -28,6 +28,12 @@ class ProjectsController < ApplicationController
 
     prepare_project_show_context
 
+    if params[:embed].present?
+      @hide_sidebar = true
+      render layout: "embed"
+      return
+    end
+
     render :show_hackpad if @project_onboarding_mission&.slug == "hackpad"
   end
 
@@ -156,6 +162,11 @@ class ProjectsController < ApplicationController
 
     @latest_ship_post = @posts.find { |post| post.postable_type == "Post::ShipEvent" }
     latest_ship_event = @latest_ship_post&.postable
+
+    @rejected_mission_sub = @posts
+      .select { |p| p.postable_type == "Post::ShipEvent" }
+      .lazy.map { |p| p.postable&.mission_submission }
+      .find { |sub| sub&.rejected? }
 
     @votes_for_payout = nil
     if current_user.present?

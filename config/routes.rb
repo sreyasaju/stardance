@@ -856,6 +856,7 @@ Rails.application.routes.draw do
     resource :og_image, only: [ :show ], module: :projects, defaults: { format: :png }
     resource :ships, only: [ :create ], module: :projects
     resource :recertification, only: [ :create ], module: :projects
+    resource :mission_resubmission, only: [ :create ], module: :projects
     resource :funding_request, only: [ :create ], module: :projects
     resource :mission, only: [ :create, :destroy ], module: :projects, controller: "missions"
     resource :magic, only: [ :create, :destroy ], module: :projects, controller: "magic"

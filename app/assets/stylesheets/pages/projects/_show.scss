@@ -1025,10 +1025,20 @@ turbo-frame#project_hero {
   }
 
   &--returned {
-    background: color-mix(in srgb, var(--color-brand-salmon) 18%, transparent);
-    color: var(--color-brand-salmon);
+    --badge-accent: var(--color-brand-salmon);
+  }
+
+  &--approved {
+    --badge-accent: var(--color-brand-mint);
+    text-decoration: none;
+  }
+
+  &--returned,
+  &--approved {
+    background: color-mix(in srgb, var(--badge-accent) 18%, transparent);
+    color: var(--badge-accent);
     border: 1px solid
-      color-mix(in srgb, var(--color-brand-salmon) 40%, transparent);
+      color-mix(in srgb, var(--badge-accent) 40%, transparent);
   }
 
   &--clickable {
@@ -1040,16 +1050,8 @@ turbo-frame#project_hero {
 
     &:hover,
     &:focus-visible {
-      background: color-mix(
-        in srgb,
-        var(--color-brand-salmon) 30%,
-        transparent
-      );
-      border-color: color-mix(
-        in srgb,
-        var(--color-brand-salmon) 65%,
-        transparent
-      );
+      background: color-mix(in srgb, var(--badge-accent, var(--color-brand-salmon)) 30%, transparent);
+      border-color: color-mix(in srgb, var(--badge-accent, var(--color-brand-salmon)) 65%, transparent);
       outline: none;
     }
   }
