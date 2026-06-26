@@ -93,6 +93,11 @@ class Projects::SetupController < ApplicationController
 
     is_first_attach = !project.mission_attachments.exists?(mission_id: mission.id)
 
+    # A project created for a hardware mission is born hardware (design stage,
+    # the entry point of the hardware flow) so it satisfies the mission's
+    # hardware-only requirement instead of being turned away on attach.
+    project.update!(hardware_stage: "design") if mission.hardware? && !project.hardware?
+
     begin
       project.attach_mission!(mission)
     rescue ActiveRecord::RecordInvalid => e

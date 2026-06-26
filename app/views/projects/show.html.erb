@@ -740,34 +740,57 @@
     <% end %>
 
     <% if @show_project_onboarding %>
+      <% onboarding_mission = @project_onboarding_mission %>
+      <% verb = @project.hardware? ? "build" : "code" %>
+      <% time_kind = @project.hardware? ? "timelapse" : "coding" %>
       <section class="project-show__onboarding" aria-labelledby="project-show-onboarding-title">
         <header class="project-show__onboarding-header">
-          <% verb = @project.hardware? ? "build" : "code" %>
-          <% time_kind = @project.hardware? ? "timelapse" : "coding" %>
+          <% if onboarding_mission&.icon&.attached? %>
+            <%= image_tag onboarding_mission.icon, alt: "", class: "project-show__onboarding-image" %>
+          <% end %>
+
+          <h2 class="project-show__onboarding-header-title" id="project-show-onboarding-title">
+            <%= onboarding_mission ? onboarding_mission.name : (@hackatime_linked ? "You're all set — go #{verb}!" : "Welcome to your new project!") %>
+          </h2>
+
+          <% if onboarding_mission&.has_guide? %>
+            <p class="project-show__onboarding-header-body">
+              Open the guide to start <%= onboarding_mission.name %>!
+            </p>
+          <% end %>
+
+          <%# Time-tracking nudge — shown for every new project, mission or not. %>
           <% if !@hackatime_linked %>
-            <h2 class="project-show__onboarding-header-title" id="project-show-onboarding-title">Welcome to your new project!</h2>
             <p class="project-show__onboarding-header-body">
               Link Hackatime to start tracking your time. Once you do and post a devlog, you'll unlock free stickers in the shop!
             </p>
           <% elsif @project.hackatime_keys.present? %>
-            <h2 class="project-show__onboarding-header-title" id="project-show-onboarding-title">You're all set — go <%= verb %>!</h2>
             <p class="project-show__onboarding-header-body">
               Once you have 15 minutes of <%= time_kind %> time, come back and write your first devlog!
             </p>
           <% elsif @all_hackatime_projects.present? %>
-            <h2 class="project-show__onboarding-header-title" id="project-show-onboarding-title">You're all set — go <%= verb %>!</h2>
             <p class="project-show__onboarding-header-body">
               We found Hackatime projects on your account — <%= link_to "edit your project", project_path(@project, editing: true), class: "project-show__onboarding-header-link", data: { turbo_frame: "project_hero" } %> to link one. Once you have 15 minutes of <%= time_kind %> time, write your first devlog!
             </p>
           <% else %>
-            <h2 class="project-show__onboarding-header-title" id="project-show-onboarding-title">You're all set — go <%= verb %>!</h2>
             <p class="project-show__onboarding-header-body">
               Start coding with Hackatime running. Once you have 15 minutes, <%= link_to "edit your project", project_path(@project, editing: true), class: "project-show__onboarding-header-link", data: { turbo_frame: "project_hero" } %> to link your Hackatime project, then write your first devlog!
             </p>
           <% end %>
         </header>
 
-        <% if Flipper.enabled?(:hardware_flow, current_user) && @project.hardware? %>
+        <%# Prominent guide CTA: the mission's own guide when on a mission,
+            otherwise the hardware getting-started guide for hardware projects. %>
+        <% if onboarding_mission&.has_guide? %>
+          <% guide_href = onboarding_mission.external_guide? ? onboarding_mission.guide_url : guide_mission_path(onboarding_mission.slug) %>
+          <%= link_to guide_href,
+                      class: "action-btn action-btn--large action-btn--primary project-show__onboarding-cta",
+                      target: onboarding_mission.external_guide? ? "_blank" : nil,
+                      rel: onboarding_mission.external_guide? ? "noopener" : nil,
+                      data: { turbo: false } do %>
+            Open the guide!<%= inline_svg_tag "icons/right-arrow.svg", class: "action-btn__icon action-btn__icon--trailing", aria: { hidden: true } %>
+          <% end %>
+        <% elsif Flipper.enabled?(:hardware_flow, current_user) && @project.hardware? %>
           <%= link_to guide_path("hardware"),
                       class: "action-btn action-btn--large action-btn--primary project-show__onboarding-cta",
                       target: "_blank", rel: "noopener",
