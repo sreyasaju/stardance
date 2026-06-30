@@ -12,6 +12,7 @@
   track_engagement = local_assigns.fetch(:track_engagement, true)
   demo_url         = local_assigns.fetch(:demo_url, project.demo_url)
   repo_url         = local_assigns.fetch(:repo_url, project.repo_url)
+  payout_review    = local_assigns[:payout_review]
   engagement_data = if track_engagement
     {
       controller: "feed-engagement",
@@ -127,7 +128,7 @@
     <% end %>
   </ul>
 
-  <% if demo_url.present? || repo_url.present? %>
+  <% if demo_url.present? || repo_url.present? || payout_review.present? %>
     <div class="feed-post-card__body project-show__latest-ship-cta">
       <% if demo_url.present? %>
         <%= link_to project.hardware? ? "Video of Project →" : "Try project →",
@@ -142,6 +143,14 @@
                     target: "_blank",
                     rel: "noopener",
                     class: "project-show__latest-ship-btn" %>
+      <% end %>
+      <% if payout_review.present? %>
+        <button type="button"
+                class="project-show__latest-ship-btn"
+                onclick="document.getElementById('payout-review-modal').showModal()"
+                aria-haspopup="dialog">
+          Review payout →
+        </button>
       <% end %>
     </div>
   <% end %>

@@ -259,6 +259,9 @@ application.register("order-form", OrderFormController);
 import ParallaxController from "./parallax_controller";
 application.register("parallax", ParallaxController);
 
+import PayoutReviewController from "./payout_review_controller";
+application.register("payout-review", PayoutReviewController);
+
 import PostMenuController from "./post_menu_controller";
 application.register("post-menu", PostMenuController);
 

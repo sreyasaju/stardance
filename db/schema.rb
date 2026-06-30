@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_26_152622) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_30_165531) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -658,6 +658,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_152622) do
     t.datetime "payout_basis_locked_at"
     t.decimal "payout_basis_overall_score", precision: 5, scale: 2
     t.decimal "payout_basis_percentile", precision: 5, scale: 2
+    t.bigint "payout_basis_vote_ids", default: [], null: false, array: true
     t.string "payout_blessing"
     t.string "payout_curve_version"
     t.text "review_instructions"

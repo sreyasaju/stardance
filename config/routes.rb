@@ -478,7 +478,7 @@ Rails.application.routes.draw do
   # Voting
   get "rate/new", to: "votes#new", as: :new_rate
   resources :ship_events, only: [] do
-    resource :vote_reasons, only: :show, controller: "ship_events/vote_reasons"
+    resource :payout_acceptance, only: :create, controller: "ship_events/payout_acceptances"
   end
   resources :votes, only: [ :new, :create ] do
     resource :flag, only: :create, controller: "votes/flags"

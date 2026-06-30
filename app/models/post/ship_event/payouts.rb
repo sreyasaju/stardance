@@ -44,11 +44,21 @@ module Post::ShipEvent::Payouts
     end
 
     def payout_score_sample
-      rows = Vote.payout_countable
-                 .where(ship_event_id: voting_payout_path.select(:id))
-                 .pluck(:ship_event_id, *Vote.score_columns)
+      ship_event_ids = voting_payout_path.select(:id)
 
-      scores_by_ship = rows.group_by(&:first).transform_values { |ship_rows| ship_rows.map { |row| row.drop(1) } }
+      locked_vote_ids_by_ship = where(id: ship_event_ids)
+        .where.not(payout_basis_locked_at: nil)
+        .pluck(:id, :payout_basis_vote_ids)
+        .to_h
+
+      rows = Vote.payout_countable
+                 .where(ship_event_id: ship_event_ids)
+                 .order(:created_at, :id)
+                 .pluck(:ship_event_id, :id, *Vote.score_columns)
+
+      scores_by_ship = rows.group_by(&:first).each_with_object({}) do |(ship_event_id, ship_rows), result|
+        result[ship_event_id] = payout_counted_score_rows(ship_rows, locked_vote_ids_by_ship[ship_event_id])
+      end
       medians_by_ship = scores_by_ship.transform_values { |ship_rows| payout_medians(ship_rows) }
 
       {
@@ -58,6 +68,18 @@ module Post::ShipEvent::Payouts
           medians_by_ship.values.filter_map { |medians| medians[category] }
         end
       }
+    end
+
+    def payout_counted_score_rows(ship_rows, locked_vote_ids)
+      selected =
+        if locked_vote_ids.present?
+          indexed = ship_rows.index_by { |row| row[1] }
+          locked_vote_ids.filter_map { |vote_id| indexed[vote_id] }
+        else
+          ship_rows.first(Post::ShipEvent::VOTES_REQUIRED_FOR_PAYOUT)
+        end
+
+      selected.map { |row| row.drop(2) }
     end
 
     def payout_medians(score_rows)
@@ -201,8 +223,39 @@ module Post::ShipEvent::Payouts
     payout_basis_locked_at + PAYOUT_REVIEW_WINDOW if payout_basis_locked_at
   end
 
+  def payout_counted_votes
+    if payout_basis_locked_at? && payout_basis_vote_ids.present?
+      snapshot = votes.where(id: payout_basis_vote_ids).index_by(&:id)
+      payout_basis_vote_ids.filter_map { |vote_id| snapshot[vote_id] }
+    else
+      votes.payout_countable
+           .order(:created_at, :id)
+           .limit(Post::ShipEvent::VOTES_REQUIRED_FOR_PAYOUT)
+           .to_a
+    end
+  end
+
+  def payout_counted_vote_ids
+    payout_counted_votes.map(&:id)
+  end
+
   def estimated_payout
     payout_amount
+  end
+
+  def payout_acceptable_by?(user)
+    user.present? &&
+      payout_review_open? &&
+      (user.admin? || project&.memberships&.where(user: user)&.exists?)
+  end
+
+  def accept_payout_now(user:)
+    if payout_acceptable_by?(user)
+      self.paper_trail_event = "payout_accepted_early"
+      issue_payout(force: true)
+    else
+      false
+    end
   end
 
   def payout_preview(sample = self.class.payout_score_sample, votes_count: nil, pending_flags_count: nil)
@@ -237,7 +290,8 @@ module Post::ShipEvent::Payouts
       payout_basis_percentile: nil,
       payout_basis_locked_at: nil,
       payout_curve_version: nil,
-      payout_blessing: nil
+      payout_blessing: nil,
+      payout_basis_vote_ids: []
     )
   end
 
@@ -251,6 +305,7 @@ module Post::ShipEvent::Payouts
     end
 
     def lock_payout_basis
+      self.payout_basis_vote_ids = payout_counted_vote_ids
       refresh_payout_score! if overall_percentile.nil?
 
       self.multiplier = payout_multiplier
