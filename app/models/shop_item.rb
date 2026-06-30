@@ -199,26 +199,35 @@ class ShopItem < ApplicationRecord
 
   # Top affordable items for a user, for payout-email recommendations. Reuses the
   # cached shop-page set (already enabled/listed/buyable, non-prize, with stock +
-  # purchase counts preloaded) so it adds no extra catalog queries. Items the user
-  # has wishlisted come first (highest intent — "the thing you saved for is now in
-  # reach"), then the most popular affordable items fill the rest. Affordability
-  # and display both use ticket_cost so the email's price always matches what it
-  # filtered on. Fails closed to [] so a payout email never breaks on a rec error.
+  # purchase counts preloaded) so it adds no extra catalog queries. Only items
+  # available in the user's region and within their balance at the real
+  # region/user price are eligible (price_for_user is computed once per item and
+  # stashed for display, so the email shows exactly what it filtered on). Items
+  # the user has wishlisted come first (highest intent), then the most popular
+  # affordable items fill the rest. Fails closed to [] so a payout email never
+  # breaks on a recommendation error.
   def self.affordable_for(user, limit: 3)
+    region  = user.shop_region.presence || (user.has_regions? ? user.regions.first : nil) || "US"
     balance = user.balance
-    affordable = cached_shop_page_data[:buyable_standalone]
+
+    priced = cached_shop_page_data[:buyable_standalone]
       .reject(&:is_free?)
       .reject(&:out_of_stock?)
-      .select { |item| item.ticket_cost <= balance }
+      .select { |item| item.enabled_in_region?(region) }
+      .map    { |item| [ item, item.price_for_user(user, region) ] }
+      .select { |(_item, price)| price <= balance }
 
     wishlisted_ids = user.wishlisted_shop_items.pluck(:id).to_set
-    ordered = affordable
-      .partition { |item| wishlisted_ids.include?(item.id) }
-      .flat_map { |group| group.sort_by { |item| -item.current_event_purchases } }
+    ordered = priced
+      .partition { |(item, _price)| wishlisted_ids.include?(item.id) }
+      .flat_map  { |group| group.sort_by { |(item, _price)| -item.current_event_purchases } }
       .first(limit)
 
-    ordered.each { |item| item.instance_variable_set(:@recommended_from_wishlist, wishlisted_ids.include?(item.id)) }
-    ordered
+    ordered.map do |(item, price)|
+      item.instance_variable_set(:@recommended_from_wishlist, wishlisted_ids.include?(item.id))
+      item.instance_variable_set(:@recommended_price, price)
+      item
+    end
   rescue => e
     Rails.logger.warn("ShopItem.affordable_for failed for user #{user&.id}: #{e.message}")
     []
@@ -227,6 +236,12 @@ class ShopItem < ApplicationRecord
   # True when affordable_for surfaced this item because the user wishlisted it.
   def recommended_from_wishlist?
     instance_variable_defined?(:@recommended_from_wishlist) && @recommended_from_wishlist
+  end
+
+  # The region/user price affordable_for filtered + should display (falls back to
+  # ticket_cost outside the recommendation flow).
+  def recommended_price
+    instance_variable_defined?(:@recommended_price) ? @recommended_price : ticket_cost
   end
 
   MANUAL_FULFILLMENT_TYPES = [
