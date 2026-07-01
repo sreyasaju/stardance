@@ -16,6 +16,10 @@ class StickerPromo
   class << self
     def active? = Time.current < DEADLINE
 
+    # Start of the current promo week; used to check whether a user has shipped
+    # a qualifying project in time for the sticker.
+    def window_start = DEADLINE - 7.days
+
     def deadline_iso = DEADLINE.iso8601
 
     # Week-scoped so each new DEADLINE is treated as a fresh, undismissed promo.
