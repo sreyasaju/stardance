@@ -246,12 +246,6 @@ class ProjectsController < ApplicationController
                   alert: e.record.errors.full_messages.to_sentence
   end
 
-  # Interstitial: hardware projects have moved to Hack Club Outpost. Reached when
-  # a user tries to create a hardware project on Stardance (see the guards in
-  # #create and Projects::SetupController#submit_mission).
-  def hardware_moved
-  end
-
   def new
     if current_user&.projects&.none?
       # /projects/new just bounces to setup for first-timers — pop it from the
@@ -488,14 +482,14 @@ class ProjectsController < ApplicationController
 
   # Hardware projects live on Outpost now, not Stardance. Intercept any attempt
   # to create one here — the /projects/new hardware form posts a hardware_stage,
-  # and a hardware mission_slug would also make the project hardware — and send
-  # the user to the interstitial that points them to Outpost.
+  # and a hardware mission_slug would also make the project hardware — and bounce
+  # back to the new-project page with the Outpost popup open.
   def redirect_hardware_creation_to_outpost
     return unless Flipper.enabled?(:hardware_to_outpost, current_user)
 
     creating_hardware = params.dig(:project, :hardware_stage).present? ||
       (params[:mission_slug].present? && Mission.find_by(slug: params[:mission_slug])&.hardware?)
-    redirect_to hardware_moved_path if creating_hardware
+    redirect_to new_project_path(hardware: "outpost") if creating_hardware
   end
 
   def project_params

@@ -1,0 +1,9 @@
+<%# Popup pointing hardware builders to Hack Club Outpost (hardware moved off
+    Stardance). Opened by the "New hardware project +" button and by the server
+    guards via ?hardware=outpost. Body is the reused Outpost widget. %>
+<dialog id="hardware-outpost-modal" class="hardware-outpost" data-controller="modal">
+  <div class="hardware-outpost__content">
+    <button type="button" class="hardware-outpost__close" data-action="click->modal#close" aria-label="Close">&times;</button>
+    <%= render DiscoverRail::OutpostWidget.new(user: current_user) %>
+  </div>
+</dialog>

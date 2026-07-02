@@ -1,0 +1,48 @@
+// Popup shown when a builder tries to create a hardware project on Stardance —
+// hardware lives on Hack Club Outpost now. Mirrors the sticker-promo dialog;
+// the body is the reused Outpost discover-rail widget.
+.hardware-outpost {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  border: none;
+  background: transparent;
+  padding: 0;
+  width: 90vw;
+  max-width: 400px;
+  max-height: fit-content;
+  overflow: visible;
+
+  &::backdrop {
+    background: var(--color-backdrop, rgba(0, 0, 0, 0.55));
+    backdrop-filter: blur(4px);
+  }
+
+  &__content {
+    position: relative;
+  }
+
+  &__close {
+    position: absolute;
+    top: var(--space-xxs);
+    right: var(--space-xxs);
+    z-index: 1;
+    appearance: none;
+    background: none;
+    border: none;
+    color: rgba(8, 6, 30, 0.55);
+    font-size: 1.5rem;
+    line-height: 1;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+
+    &:hover {
+      color: rgba(8, 6, 30, 0.9);
+    }
+  }
+}

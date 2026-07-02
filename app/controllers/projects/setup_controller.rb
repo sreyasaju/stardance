@@ -88,9 +88,10 @@ class Projects::SetupController < ApplicationController
     end
 
     # Hardware missions would make this project hardware — but hardware lives on
-    # Outpost now, so send the builder there instead of attaching it here.
+    # Outpost now, so bounce to the new-project page with the Outpost popup open
+    # instead of attaching it here.
     if mission.hardware? && Flipper.enabled?(:hardware_to_outpost, current_user)
-      redirect_to hardware_moved_path and return
+      redirect_to new_project_path(hardware: "outpost") and return
     end
 
     if project.current_mission&.id == mission.id
