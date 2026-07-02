@@ -297,7 +297,9 @@
             <button type="button" onclick="document.getElementById('adjust-balance-modal').close()">Cancel</button>
           </form>
         <% end %>
-        <%= render ActionButtonComponent.new(text: "View Votes", href: admin_user_votes_path(@user), size: :small, variant: :secondary) %>
+        <% if policy(@user).view_votes? %>
+          <%= render ActionButtonComponent.new(text: "View Votes", href: admin_user_votes_path(@user), size: :small, variant: :secondary) %>
+        <% end %>
         <button type="button" id="set-vote-bal">Set Vote Balance (<%= @user.vote_balance %>)</button>
         <script>
           document.getElementById("set-vote-bal").addEventListener("click", function() {

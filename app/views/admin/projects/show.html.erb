@@ -95,7 +95,9 @@
     <div class="admin-user-show__actions">
       <%= render ActionButtonComponent.new(text: "← Back", href: admin_projects_path, size: :small, variant: :secondary) %>
       <%= render ActionButtonComponent.new(text: "Public Page", href: project_path(@project), size: :small, variant: :secondary) %>
-      <%= render ActionButtonComponent.new(text: "Votes", href: votes_admin_project_path(@project), size: :small, variant: :secondary) %>
+      <% if policy(@project).view_votes? %>
+        <%= render ActionButtonComponent.new(text: "Votes", href: votes_admin_project_path(@project), size: :small, variant: :secondary) %>
+      <% end %>
       <% if policy(current_user).view_order_full_details? %>
         <% if @project.deleted? %>
           <%= button_to "Restore Project", restore_admin_project_path(@project), method: :post,
