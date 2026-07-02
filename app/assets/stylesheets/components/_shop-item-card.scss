@@ -66,6 +66,24 @@
           var(--color-brand-highlight) transparent;
       }
     }
+
+    &--teen-creator {
+      background: var(--color-brand-orange);
+      color: var(--color-space-bg);
+      cursor: pointer;
+      transition: filter 0.2s ease;
+
+      &::after {
+        border-color: var(--color-brand-orange) transparent
+          var(--color-brand-orange) transparent;
+      }
+
+      &:hover,
+      &:focus-visible {
+        filter: brightness(1.05);
+        outline: none;
+      }
+    }
   }
 
   &__star {
@@ -277,6 +295,16 @@
   &--out-of-stock {
     .shop-item-card__order-cta {
       display: none;
+    }
+  }
+
+  &--stacked-ribbons {
+    .shop-item-card__ribbon--teen-creator {
+      top: 48px; 
+    }
+    
+    .shop-item-card__sale-badge {
+      top: 84px;
     }
   }
 }

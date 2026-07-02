@@ -53,6 +53,7 @@
 #  source_region                     :string
 #  special                           :boolean
 #  stock                             :integer
+#  teen_creator_url                  :string
 #  ticket_cost                       :integer
 #  type                              :string
 #  unlisted                          :boolean          default(FALSE)

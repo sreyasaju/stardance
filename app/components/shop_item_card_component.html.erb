@@ -1,4 +1,4 @@
-<div class="shop-item-card<%= ' shop-item-card--achievement-locked' if locked_by_achievement %><%= ' shop-item-card--mission-locked' if mission_locked %><%= ' shop-item-card--out-of-stock' if out_of_stock? %><%= ' shop-item-card--on-sale' if on_sale %><%= ' shop-item-card--with-bow' if show_bow %><%= ' shop-item-card--spotlight' if tutorial_spotlight %><%= ' shop-item-card--wishlisted' if wishlisted %>"
+<div class="shop-item-card<%= ' shop-item-card--achievement-locked' if locked_by_achievement %><%= ' shop-item-card--mission-locked' if mission_locked %> <%= ' shop-item-card--out-of-stock' if out_of_stock? %> <%= ' shop-item-card--on-sale' if on_sale %> <%= ' shop-item-card--with-bow' if show_bow %> <%= ' shop-item-card--spotlight' if tutorial_spotlight %> <%= ' shop-item-card--wishlisted' if wishlisted %> <%= ' shop-item-card--stacked-ribbons' if (purchase_count || is_new) && teen_creator? %>"
      data-categories="<%= categories.join(',') %>"
      data-regions="<%= enabled_regions.join(',') %>"
      data-achievement-locked="<%= locked_by_achievement %>"
@@ -32,6 +32,12 @@
       <span class="shop-item-card__ribbon"><%= purchase_count %> given out</span>
     <% elsif is_new %>
       <span class="shop-item-card__ribbon shop-item-card__ribbon--new">New</span>
+    <% end %>
+
+    <% if teen_creator? %>
+      <%= link_to teen_creator_url, target: "_blank", rel: "noopener", class: "shop-item-card__ribbon shop-item-card__ribbon--teen-creator" do %>
+        Made by a teen!
+      <% end %>
     <% end %>
 
     <% if on_sale %>

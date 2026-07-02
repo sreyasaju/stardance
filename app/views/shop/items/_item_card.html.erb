@@ -52,5 +52,6 @@
   required_achievement_hints: item_achievement_infos.map(&:description),
   mission_locked: item_mission_locked,
   unlocking_mission_names: item_unlocking_missions,
-  wishlisted: wishlisted_item_ids.include?(item.id)
+  wishlisted: wishlisted_item_ids.include?(item.id),
+  teen_creator_url: item.teen_creator_url
 ) %>
